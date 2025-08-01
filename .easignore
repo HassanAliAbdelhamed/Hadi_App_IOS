@@ -1,0 +1,27 @@
+# Git and logs
+.git
+.gitignore
+*.log
+
+# Development-only folders
+node_modules/
+.vscode/
+.idea/
+__tests__/
+coverage/
+*.md
+
+# Android/iOS native (if using only managed workflow)
+android/
+ios/
+
+# Build outputs
+build/
+dist/
+.expo/
+.expo-shared/
+
+# Temporary or unused assets
+assets/temp/
+assets/audio/
+assets/test/

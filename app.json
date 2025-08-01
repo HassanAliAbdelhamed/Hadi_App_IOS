@@ -2,13 +2,13 @@
   "expo": {
     "name": "قران +",
     "slug": "quran-plus",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/AppIcon.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/Splach.jpg",
+      "image": "./assets/images/splach.png",
       "resizeMode": "contain",
       "backgroundColor": "#28292e"
     },
@@ -16,11 +16,14 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.hassanali2.quranplus",
+      "minSdkVersion": 21,
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/AppIcon.jpg",
-        "backgroundColor": "#28292e"
-      },
-      "package": "com.anonymous.musicplayer"
+      "foregroundImage": "./assets/images/AppIcon.jpg",
+      "backgroundColor": "#28292e"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -39,7 +42,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "0e38a453-e8d3-4419-af56-00a4ffcd122e"
+        "projectId": "78b0fcf0-28cb-42ed-8fed-f34d1a50c90e"
       }
     }
   }

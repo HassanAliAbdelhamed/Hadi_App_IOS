@@ -2,6 +2,7 @@ import TrackPlayer, { Capability } from "react-native-track-player";
 let isPlayerSetup = false
 export default async function playTrack({
   swaraId,
+  qareId,
   audioSrc,
   image,
   SwaraTitle,
@@ -24,6 +25,7 @@ export default async function playTrack({
     await TrackPlayer.add([
       {
         id: swaraId,
+        qId:qareId,
         url: audioSrc,
         title: SwaraTitle,
         artist: QareTitle,

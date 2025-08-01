@@ -4,7 +4,6 @@ import { AntDesign, MaterialIcons } from '@expo/vector-icons';
 import AllColors from "../assets/Colors";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import QarePage from '../Bracsh Screens/qarePage'
 
   // Card Component
   const QaraCard =({ cardinfo ,facIconState}) => {

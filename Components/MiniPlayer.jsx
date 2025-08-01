@@ -10,10 +10,13 @@ import {
 import Slider from "@react-native-community/slider";
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useAudio } from "./audioContext";
+import { useNavigation } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function MiniPlayer() {
+  
+  const navigate = useNavigation();
   const {
     isPlaying,
     togglePlayPause,
@@ -28,7 +31,7 @@ export default function MiniPlayer() {
 
   if (!currentAudio || !currentInfo) return null;
 
-  const { title, image, qaree } = currentInfo;
+  const { qareID, title, image, qaree } = currentInfo;
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
@@ -117,8 +120,15 @@ export default function MiniPlayer() {
             />
           </TouchableOpacity>
 
-          <Image source={{ uri: image }} style={styles.cover} />
-
+          <TouchableOpacity
+            style={styles.PressableImage}
+            onPress={() => {
+              qaree != "مباشر" &&
+                navigate.navigate("qarePage", { id: qareID - 1 });
+            }}
+          >
+            <Image source={{ uri: image }} style={styles.cover} />
+          </TouchableOpacity>
           <View style={styles.left}>
             <Text style={styles.title} numberOfLines={1}>
               {title}
@@ -175,14 +185,17 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    position: "absolute",
-    top: -25,
-    left: "50%",
-    transform: [{ translateX: -25 }],
-    marginHorizontal: 8,
     borderWidth: 2,
     borderColor: "#639c6d",
     borderStyle: "solid",
+    borderRadius: 25,
+  },
+  PressableImage: {
+    position: "absolute",
+    width:width -40,
+    top: -25,
+    left: width / 2 - 25,
+    marginHorizontal: 8,
   },
   title: {
     color: "white",

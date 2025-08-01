@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -13,6 +13,8 @@ import MiniPlayer from './Components/MiniPlayer';
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { StatusBar, SafeAreaView, StyleSheet } from 'react-native';
+import { I18nManager} from 'react-native';
+
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -71,6 +73,10 @@ function TabBar() {
 }
 
 export default function App() {
+  useEffect(() => {
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(true);
+  }, []);
   const [Fonts] = useFonts({
     Cairo: require('./assets/fonts/Cairo.ttf'),
     Noto: require('./assets/fonts/NotoNast.ttf'),

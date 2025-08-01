@@ -116,7 +116,8 @@ import playTrack from "./playTrack";
           const image = QareCard.img;
           let SwaraTitle = cardInfo.title;
           let QareTitle = QareCard.title;
-          playTrack({swaraId,audioSrc,image,SwaraTitle,QareTitle})
+          let qareId = QareCard.id;          
+          playTrack({swaraId,qareId,audioSrc,image,SwaraTitle,QareTitle})
         }}
       >
         <View style={styles.linkContainer}>

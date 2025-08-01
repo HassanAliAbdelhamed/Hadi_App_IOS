@@ -20,6 +20,8 @@ export const AudioProvider = ({ children }) => {
       if (id !== null) {
         const track = await TrackPlayer.getTrack(id);
         setCurrentInfo({
+          id:track.qareID,
+          qareID:track.qId,
           title: track.title,
           image: track.artwork,
           qaree: track.artist,
