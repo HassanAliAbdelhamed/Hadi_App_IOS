@@ -34,17 +34,15 @@ function TabBar() {
         },
       }}
     >
+      
       <Tabs.Screen
-        name="المفضلة"
-        component={FavoriteScreen}
+        name="الرئسية"
+        component={HomeScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ color, focused }) =>
-            focused ? (
-              <AntDesign name="heart" size={26} color={color} />
-            ) : (
-              <AntDesign name="hearto" size={26} color={color} />
-            ),
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="headphones" size={28} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -58,15 +56,19 @@ function TabBar() {
         }}
       />
       <Tabs.Screen
-        name="الرئسية"
-        component={HomeScreen}
+        name="المفضلة"
+        component={FavoriteScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="headphones" size={28} color={color} />
-          ),
+          tabBarIcon: ({ color, focused }) =>
+            focused ? (
+              <AntDesign name="heart" size={26} color={color} />
+            ) : (
+              <AntDesign name="hearto" size={26} color={color} />
+            ),
         }}
       />
+      
 
     </Tabs.Navigator>
   );

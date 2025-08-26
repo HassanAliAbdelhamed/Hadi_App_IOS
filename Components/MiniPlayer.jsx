@@ -84,10 +84,11 @@ export default function MiniPlayer() {
 
           {/* أزرار التحكم */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity onPress={() => seekTo(position - 10)}>
-              <Ionicons name="play-back" size={40} color="white" />
-            </TouchableOpacity>
 
+          <TouchableOpacity onPress={() => seekTo(position + 10)}>
+              <Ionicons name="play-forward" size={40} color="white" />
+            </TouchableOpacity>
+            
             <TouchableOpacity
               style={styles.playButton}
               onPress={togglePlayPause}
@@ -98,14 +99,32 @@ export default function MiniPlayer() {
                 color="white"
               />
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => seekTo(position + 10)}>
-              <Ionicons name="play-forward" size={40} color="white" />
+            
+            <TouchableOpacity onPress={() => seekTo(position - 10)}>
+              <Ionicons name="play-back" size={40} color="white" />
             </TouchableOpacity>
+
+            
           </View>
         </View>
       ) : (
         <View style={styles.miniContent} className="w-full">
+          
+          <View style={styles.left}>
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+          
+          <TouchableOpacity
+            style={styles.PressableImage}
+            onPress={() => {
+              qaree != "مباشر" &&
+                navigate.navigate("qarePage", { id: qareID - 1 });
+            }}
+          >
+            <Image source={{ uri: image }} style={styles.cover} />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={(e) => {
               e.stopPropagation();
@@ -120,20 +139,6 @@ export default function MiniPlayer() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.PressableImage}
-            onPress={() => {
-              qaree != "مباشر" &&
-                navigate.navigate("qarePage", { id: qareID - 1 });
-            }}
-          >
-            <Image source={{ uri: image }} style={styles.cover} />
-          </TouchableOpacity>
-          <View style={styles.left}>
-            <Text style={styles.title} numberOfLines={1}>
-              {title}
-            </Text>
-          </View>
         </View>
       )}
     </TouchableOpacity>
@@ -192,14 +197,14 @@ const styles = StyleSheet.create({
   },
   PressableImage: {
     position: "absolute",
-    width:width -40,
+    width:40,
     top: -25,
     left: width / 2 - 25,
     marginHorizontal: 8,
   },
   title: {
     color: "white",
-    fontSize: 16,
+    fontSize: 14,
     flexShrink: 1,
     fontFamily: "Cairo",
   },

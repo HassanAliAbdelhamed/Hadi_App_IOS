@@ -99,7 +99,6 @@ const Styles = StyleSheet.create({
   container: {
     flex: 2,
     backgroundColor: AllColors.BlackBackgroundColor,
-    direction: "rtl",
   },
   Header: {
     backgroundColor: AllColors.shadowblackColor,
@@ -108,8 +107,9 @@ const Styles = StyleSheet.create({
     borderBottomRightRadius: 20,
   },
   HeaderImg: {
-    marginHorizontal: "auto",
     marginTop: -30,
+    marginRight: "auto",
+    marginLeft: "auto",
     position: "relative",
     top: 20,
     width: 300,
