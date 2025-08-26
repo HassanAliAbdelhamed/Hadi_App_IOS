@@ -4,11 +4,11 @@
     "slug": "quran-plus",
     "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/AppIcon.jpg",
+    "icon": "./assets/images/AppIcon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splach.png",
+      "image": "./assets/images/AppIcon.png",
       "resizeMode": "contain",
       "backgroundColor": "#28292e"
     },
@@ -17,11 +17,8 @@
     },
     "android": {
       "package": "com.hassanali2.quranplus",
-      "minSdkVersion": 21,
-      "compileSdkVersion": 35,
-      "targetSdkVersion": 35,
       "adaptiveIcon": {
-      "foregroundImage": "./assets/images/AppIcon.jpg",
+      "foregroundImage": "./assets/images/AppIcon.png",
       "backgroundColor": "#28292e"
       }
     },

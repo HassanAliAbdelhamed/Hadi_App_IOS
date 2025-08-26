@@ -10,8 +10,6 @@ pluginManagement {
   }
 }
 
-plugins { id("com.facebook.react.settings") }
-
 def getRNMinorVersion() {
   def version = providers.exec {
     commandLine("node", "-e", "console.log(require('react-native/package.json').version);")
@@ -23,6 +21,7 @@ def getRNMinorVersion() {
   return minor
 }
 
+// For React Native 0.73.2, we need to use the legacy configuration
 if (getRNMinorVersion() >= 75) {
   extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
     if (System.getenv('EXPO_UNSTABLE_CORE_AUTOLINKING') == '1') {
@@ -44,7 +43,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'music-player'
+rootProject.name = 'quran-player'
 
 dependencyResolutionManagement {
   versionCatalogs {
