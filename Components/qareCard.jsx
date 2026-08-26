@@ -12,14 +12,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
     useEffect(() => {
       const checkFavorite = async () => {
-        const favData = await AsyncStorage.getItem('FavQuraa');
-        if (favData) {
-          const favList = JSON.parse(favData);
-          setIsFavorite(favList.includes(cardinfo.id));
+        try {
+          const favData = await AsyncStorage.getItem('FavQuraa');
+          if (favData) {
+            const favList = JSON.parse(favData);
+            setIsFavorite(favList.includes(cardinfo.id));
+          }
+        } catch (e) {
+          console.warn("Error checking favorites:", e.message);
         }
       };
       checkFavorite();
-    }, []);
+    }, [cardinfo.id]);
 
     const handleToggleFavorite = async () => {
       const newValue = !isFavorite;

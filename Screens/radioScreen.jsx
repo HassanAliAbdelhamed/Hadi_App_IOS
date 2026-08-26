@@ -77,7 +77,7 @@ export default function RadioScreen() {
   return (
     <View style={Styles.container}>
       <View style={Styles.Header}>
-        <Image source={(require = radioIconImg)} style={Styles.HeaderImg} />
+        <Image source={radioIconImg} style={Styles.HeaderImg} />
         <SearchInput
           searchHandler={searchHandler}
           title="أكتب أسم القارئ...."

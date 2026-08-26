@@ -2,7 +2,7 @@
   "expo": {
     "name": "قران +",
     "slug": "quran-plus",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/AppIcon.png",
     "scheme": "myapp",
@@ -18,9 +18,16 @@
     "android": {
       "package": "com.hassanali2.quranplus",
       "adaptiveIcon": {
-      "foregroundImage": "./assets/images/AppIcon.png",
-      "backgroundColor": "#28292e"
-      }
+        "foregroundImage": "./assets/images/AppIcon.png",
+        "backgroundColor": "#28292e"
+      },
+      "permissions": [
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK"
+      ]
     },
     "web": {
       "bundler": "metro",

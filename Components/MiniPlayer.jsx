@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  BackHandler,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
@@ -15,19 +16,35 @@ import { useNavigation } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 
 export default function MiniPlayer() {
-  
+
   const navigate = useNavigation();
+  const audioContext = useAudio();
+
+  // Safely destructure with defaults
   const {
-    isPlaying,
-    togglePlayPause,
-    currentAudio,
-    currentInfo,
-    position,
-    duration,
-    seekTo,
-    isExpanded,
-    setIsExpanded,
-  } = useAudio();
+    isPlaying = false,
+    togglePlayPause = () => { },
+    currentAudio = false,
+    currentInfo = null,
+    position = 0,
+    duration = 0,
+    seekTo = () => { },
+    isExpanded = false,
+    setIsExpanded = () => { },
+  } = audioContext || {};
+
+  // Handle back button press when full screen is open
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (isExpanded) {
+        setIsExpanded(false);
+        return true; // Prevent default back behavior
+      }
+      return false; // Allow default back behavior
+    });
+
+    return () => backHandler.remove();
+  }, [isExpanded, setIsExpanded]);
 
   if (!currentAudio || !currentInfo) return null;
 
@@ -36,15 +53,21 @@ export default function MiniPlayer() {
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
   const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+
+    if (hours > 0) {
+      return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+    } else {
+      return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+    }
   };
 
   return (
     <TouchableOpacity
       activeOpacity={1}
-      onPress={toggleExpand}
+      onPress={!isExpanded ? toggleExpand : undefined}
       style={[styles.container, isExpanded && styles.expandedContainer]}
     >
       {isExpanded ? (
@@ -64,16 +87,17 @@ export default function MiniPlayer() {
           <Image source={{ uri: image }} style={styles.fullCover} />
 
           {/* شريط التمرير */}
-
           <Slider
             style={styles.slider}
             minimumValue={0}
             maximumValue={duration}
             value={position}
-            onSlidingComplete={seekTo} // لا حاجة لضرب القيمة
+            onSlidingComplete={seekTo}
             minimumTrackTintColor="#1DB954"
             maximumTrackTintColor="#888"
             thumbTintColor="#1DB954"
+            // RTL support - reverse the slider direction
+            inverted={true}
           />
 
           {/* الوقت */}
@@ -85,10 +109,10 @@ export default function MiniPlayer() {
           {/* أزرار التحكم */}
           <View style={styles.buttonRow}>
 
-          <TouchableOpacity onPress={() => seekTo(position + 10)}>
+            <TouchableOpacity onPress={() => seekTo(position - 10)}>
               <Ionicons name="play-forward" size={40} color="white" />
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.playButton}
               onPress={togglePlayPause}
@@ -99,23 +123,23 @@ export default function MiniPlayer() {
                 color="white"
               />
             </TouchableOpacity>
-            
-            <TouchableOpacity onPress={() => seekTo(position - 10)}>
+
+            <TouchableOpacity onPress={() => seekTo(position + 10)}>
               <Ionicons name="play-back" size={40} color="white" />
             </TouchableOpacity>
 
-            
+
           </View>
         </View>
       ) : (
         <View style={styles.miniContent} className="w-full">
-          
+
           <View style={styles.left}>
             <Text style={styles.title} numberOfLines={1}>
               {title}
             </Text>
           </View>
-          
+
           <TouchableOpacity
             style={styles.PressableImage}
             onPress={() => {
@@ -126,8 +150,7 @@ export default function MiniPlayer() {
             <Image source={{ uri: image }} style={styles.cover} />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
+            onPress={() => {
               togglePlayPause();
             }}
             style={styles.iconWrapper}
@@ -193,11 +216,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#639c6d",
     borderStyle: "solid",
-    borderRadius: 25,
   },
   PressableImage: {
     position: "absolute",
-    width:40,
+    width: 40,
     top: -25,
     left: width / 2 - 25,
     marginHorizontal: 8,
@@ -223,7 +245,7 @@ const styles = StyleSheet.create({
     top: 40,
     left: 20,
     zIndex: 10,
-    backgroundColor: '"#27292f"',
+    backgroundColor: "#27292f",
     borderRadius: 30,
     padding: 8,
     // borderRadius

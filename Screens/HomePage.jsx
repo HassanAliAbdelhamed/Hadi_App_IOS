@@ -40,7 +40,7 @@ export default function HomeScreen() {
   return (
     <View style={Styles.container}>
       <View style={Styles.Header}>
-        <Image source={(require = homeIconImg)} style={Styles.HeaderImg} />
+        <Image source={homeIconImg} style={Styles.HeaderImg} />
         <SearchInput searchHandler={searchHandler} title="أكتب اسم القارئ..." />
       </View>
 
@@ -77,7 +77,7 @@ const Styles = StyleSheet.create({
     // marginHorizontal:'auto',
   },
   HeaderImg: {
-    marginHorizontal: "auto",
+    alignSelf: "center",
     marginTop: -50,
     position: "relative",
     top: 0,

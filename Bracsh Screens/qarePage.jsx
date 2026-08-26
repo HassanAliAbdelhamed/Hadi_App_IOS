@@ -70,7 +70,7 @@ function QarePage() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 10 }}
-            style={{ marginVertical: 10 }}
+            style={{ marginVertical: 10 ,marginLeft:"auto",marginRight:"auto"}}
           >
             {currentQare.Rwayat.map((rwayah, index) => (
               <TouchableOpacity
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "linear-gradient(to bottom, #484e5b, #1f2125)",
+    backgroundColor: "#363a43",
     marginBottom: 20,
     justifyContent: "space-around",
   },

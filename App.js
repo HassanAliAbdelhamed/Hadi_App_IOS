@@ -1,4 +1,7 @@
-import React, { useEffect } from 'react';
+// IMPORTANT: react-native-reanimated must be the very first import in App.js
+import 'react-native-reanimated';
+
+import React, { useEffect, useCallback, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -10,11 +13,21 @@ import RadioScreen from './Screens/radioScreen';
 import FavoriteScreen from './Screens/FavoriteScreen';
 import { AudioProvider } from './Components/audioContext';
 import MiniPlayer from './Components/MiniPlayer';
-import 'react-native-gesture-handler';
-import 'react-native-reanimated';
+import ErrorBoundary from './Components/ErrorBoundary';
 import { StatusBar, SafeAreaView, StyleSheet } from 'react-native';
-import { I18nManager} from 'react-native';
+import { I18nManager } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 
+// Maintain the splash screen visible while we fetch resources
+// Wrapped in try/catch because in bare React Native CLI this can fail
+// if the native module isn't ready yet
+try {
+  SplashScreen.preventAutoHideAsync().catch(() => {
+    console.log('Splash screen already hidden or not available');
+  });
+} catch (e) {
+  console.log('SplashScreen native module not available:', e.message);
+}
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -34,7 +47,7 @@ function TabBar() {
         },
       }}
     >
-      
+
       <Tabs.Screen
         name="الرئسية"
         component={HomeScreen}
@@ -68,48 +81,85 @@ function TabBar() {
             ),
         }}
       />
-      
+
 
     </Tabs.Navigator>
   );
 }
 
 export default function App() {
+  const [appReady, setAppReady] = useState(false);
+  const splashHidden = React.useRef(false);
+
   useEffect(() => {
     I18nManager.allowRTL(true);
     I18nManager.forceRTL(true);
   }, []);
-  const [Fonts] = useFonts({
+
+  const [fontsLoaded, fontError] = useFonts({
     Cairo: require('./assets/fonts/Cairo.ttf'),
     Noto: require('./assets/fonts/NotoNast.ttf'),
   });
 
-  if (!Fonts) {
+  // Handle hiding splash screen
+  const hideSplash = useCallback(async () => {
+    if (splashHidden.current) return;
+    splashHidden.current = true;
+    try {
+      console.log('Hiding splash screen');
+      await SplashScreen.hideAsync();
+      console.log('Splash screen hidden');
+    } catch (e) {
+      // This is expected to fail in some bare CLI configurations — safe to ignore
+      console.log('SplashScreen.hideAsync not available:', e.message);
+    }
+    // Always mark app as ready, even if hideAsync() threw
+    setAppReady(true);
+  }, []);
+
+  // Hide splash when fonts are loaded or if there's an error
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      console.log('Fonts ready - Loaded:', fontsLoaded, 'Error:', fontError);
+      hideSplash();
+    }
+  }, [fontsLoaded, fontError, hideSplash]);
+
+  // Fallback timeout to force show app after 3 seconds regardless
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      console.log('Timeout reached, forcing app to show');
+      hideSplash();
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [hideSplash]);
+
+  if (!appReady) {
     return null;
   }
 
   return (
-    <AudioProvider>
-      {/* SafeAreaView يغطي كل الشاشة بخلفية داكنة */}
+    <ErrorBoundary>
       <SafeAreaView style={styles.container}>
-        {/* شريط الحالة بخط أبيض فوق خلفية داكنة */}
         <StatusBar barStyle="light-content" backgroundColor="#1b1f23" translucent={false} />
-
-        <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen  name="TabBar" component={TabBar} options={{ headerShown: false }} />
-            <Stack.Screen name="qarePage" component={QarePage} options={{ headerShown: false }} />
-          </Stack.Navigator>
+        <AudioProvider>
+          <NavigationContainer>
+            <Stack.Navigator>
+              <Stack.Screen name="TabBar" component={TabBar} options={{ headerShown: false }} />
+              <Stack.Screen name="qarePage" component={QarePage} options={{ headerShown: false }} />
+            </Stack.Navigator>
+          </NavigationContainer>
           <MiniPlayer />
-        </NavigationContainer>
+        </AudioProvider>
       </SafeAreaView>
-    </AudioProvider>
+    </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1b1f23', // نفس لون خلفية التاب بار
+    backgroundColor: '#1b1f23',
   },
 });

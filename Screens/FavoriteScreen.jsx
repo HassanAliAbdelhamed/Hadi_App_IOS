@@ -215,14 +215,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
   },
-  QareTitle: {
-    color: 'white',
-    fontSize: 18,
-    marginBottom: 10,
-    fontFamily: 'Cairo',
-    display: 'flex',
-    justifyContent: 'flex-start',
-  },
   cardImage: {
     width: 75,
     height: 75,
