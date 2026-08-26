@@ -132,7 +132,7 @@ import playTrack from "./playTrack";
             {facIconState && (
               <TouchableOpacity onPress={handleToggleFavorite}>
                 <AntDesign
-                  name={isFavorite ? "heart" : "hearto"}
+                  name={isFavorite ? "heart" : "hear"}
                   size={23}
                   color={isFavorite ? "red" : "white"}
                   style={styles.icon}

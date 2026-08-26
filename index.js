@@ -14,5 +14,4 @@ try {
   console.warn('Error in TrackPlayer setup:', e.message);
 }
 
-// Component name MUST match getMainComponentName() in MainActivity.kt → returns "main"
 AppRegistry.registerComponent('main', () => App);

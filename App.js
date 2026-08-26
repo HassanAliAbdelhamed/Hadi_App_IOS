@@ -77,7 +77,7 @@ function TabBar() {
             focused ? (
               <AntDesign name="heart" size={26} color={color} />
             ) : (
-              <AntDesign name="hearto" size={26} color={color} />
+              <AntDesign name="heart" size={26} color={color} />
             ),
         }}
       />
@@ -140,17 +140,32 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
+        <ErrorBoundary>
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#1b1f23" translucent={false} />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#1b1f23"
+          translucent={false}
+        />
+
         <AudioProvider>
           <NavigationContainer>
             <Stack.Navigator>
-              <Stack.Screen name="TabBar" component={TabBar} options={{ headerShown: false }} />
-              <Stack.Screen name="qarePage" component={QarePage} options={{ headerShown: false }} />
+              <Stack.Screen
+                name="TabBar"
+                component={TabBar}
+                options={{ headerShown: false }}
+              />
+
+              <Stack.Screen
+                name="qarePage"
+                component={QarePage}
+                options={{ headerShown: false }}
+              />
             </Stack.Navigator>
+
+            <MiniPlayer />
           </NavigationContainer>
-          <MiniPlayer />
         </AudioProvider>
       </SafeAreaView>
     </ErrorBoundary>

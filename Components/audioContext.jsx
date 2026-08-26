@@ -69,10 +69,13 @@ export const AudioProvider = ({ children }) => {
     };
   }, []);
 
-  useTrackPlayerEvents([Event.PlaybackTrackChanged], async (event) => {
-    if (event.type === Event.PlaybackTrackChanged && event.nextTrack != null) {
+  useTrackPlayerEvents(
+  [Event.PlaybackActiveTrackChanged],
+  async (event) => {
+    if (event.index != null) {
       try {
-        const track = await TrackPlayer.getTrack(event.nextTrack);
+        const track = await TrackPlayer.getTrack(event.index);
+
         if (track) {
           setCurrentInfo({
             id: track.id,
@@ -86,7 +89,8 @@ export const AudioProvider = ({ children }) => {
         console.warn("Error fetching track:", e.message);
       }
     }
-  });
+  }
+);
 
   // Fetch current track info when player is ready
   useEffect(() => {

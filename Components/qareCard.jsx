@@ -85,7 +85,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
           {facIconState&&
             <TouchableOpacity onPress={handleToggleFavorite}>
             <AntDesign
-              name={isFavorite ? 'heart' : 'hearto'}
+              name={isFavorite ? 'heart' : 'hear'}
               size={23}
               color={isFavorite ? 'red' : 'white'}
               style={Styles.icon}
