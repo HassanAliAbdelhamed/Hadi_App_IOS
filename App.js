@@ -6,7 +6,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from './Screens/HomePage';
-import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import QarePage from './Bracsh Screens/qarePage';
 import { useFonts } from 'expo-font';
 import RadioScreen from './Screens/radioScreen';
@@ -14,13 +15,14 @@ import FavoriteScreen from './Screens/FavoriteScreen';
 import { AudioProvider } from './Components/audioContext';
 import MiniPlayer from './Components/MiniPlayer';
 import ErrorBoundary from './Components/ErrorBoundary';
-import { StatusBar, SafeAreaView, StyleSheet } from 'react-native';
-import { I18nManager } from 'react-native';
+import { StatusBar, SafeAreaView, StyleSheet, View, Platform, I18nManager } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import QuraaScreen from './Screens/QuraaScreen';
+import RandomPickerScreen from './Screens/RandomPickerScreen';
+import FortuneWheelIcon from './Components/NavbarIcons/FortuneWheelIcon';
+import AllColors from './assets/Colors';
+import QariSpinnerScreen from './Screens/QareSpinnerScreen';
 
-// Maintain the splash screen visible while we fetch resources
-// Wrapped in try/catch because in bare React Native CLI this can fail
-// if the native module isn't ready yet
 try {
   SplashScreen.preventAutoHideAsync().catch(() => {
     console.log('Splash screen already hidden or not available');
@@ -37,27 +39,58 @@ function TabBar() {
     <Tabs.Navigator
       initialRouteName="الرئسية"
       screenOptions={{
-        tabBarActiveTintColor: '#639c6d',
+        tabBarActiveTintColor: '#76A68D',
         headerPressColor: '#000',
         tabBarStyle: {
           borderColor: 'transparent',
           borderWidth: 1,
-          borderRadius: 2,
-          backgroundColor: '#1b1f23',
+          backgroundColor: '#0d0d0d',
+          height: 65,
+          paddingBottom: 8,
         },
       }}
     >
-
       <Tabs.Screen
         name="الرئسية"
         component={HomeScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="headphones" size={28} color={color} />
+          tabBarIcon: ({ color, focused }) =>
+            focused ? (
+              <MaterialCommunityIcons name="home" size={26} color={color} />
+            ) : (
+              <MaterialCommunityIcons name="home-outline" size={26} color={color} />
+            ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="القرآء"
+        component={QuraaScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) =>
+            focused ? (
+              <MaterialCommunityIcons name="microphone" size={26} color={color} />
+            ) : (
+              <MaterialCommunityIcons name="microphone-outline" size={26} color={color} />
+            ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="عجلة الحظ"
+        component={QariSpinnerScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.customWheelButton, focused && styles.activeWheelButton]}>
+              <FortuneWheelIcon focused={focused} />
+            </View>
           ),
         }}
       />
+
       <Tabs.Screen
         name="الإزاعة"
         component={RadioScreen}
@@ -68,6 +101,7 @@ function TabBar() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="المفضلة"
         component={FavoriteScreen}
@@ -75,14 +109,12 @@ function TabBar() {
           headerShown: false,
           tabBarIcon: ({ color, focused }) =>
             focused ? (
-              <AntDesign name="heart" size={26} color={color} />
+              <FontAwesome name="heart" size={26} color={color} />
             ) : (
-              <AntDesign name="heart" size={26} color={color} />
+              <FontAwesome name="heart-o" size={26} color={color} />
             ),
         }}
       />
-
-
     </Tabs.Navigator>
   );
 }
@@ -101,7 +133,6 @@ export default function App() {
     Noto: require('./assets/fonts/NotoNast.ttf'),
   });
 
-  // Handle hiding splash screen
   const hideSplash = useCallback(async () => {
     if (splashHidden.current) return;
     splashHidden.current = true;
@@ -110,14 +141,11 @@ export default function App() {
       await SplashScreen.hideAsync();
       console.log('Splash screen hidden');
     } catch (e) {
-      // This is expected to fail in some bare CLI configurations — safe to ignore
       console.log('SplashScreen.hideAsync not available:', e.message);
     }
-    // Always mark app as ready, even if hideAsync() threw
     setAppReady(true);
   }, []);
 
-  // Hide splash when fonts are loaded or if there's an error
   useEffect(() => {
     if (fontsLoaded || fontError) {
       console.log('Fonts ready - Loaded:', fontsLoaded, 'Error:', fontError);
@@ -125,7 +153,6 @@ export default function App() {
     }
   }, [fontsLoaded, fontError, hideSplash]);
 
-  // Fallback timeout to force show app after 3 seconds regardless
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       console.log('Timeout reached, forcing app to show');
@@ -140,7 +167,7 @@ export default function App() {
   }
 
   return (
-        <ErrorBoundary>
+    <ErrorBoundary>
       <SafeAreaView style={styles.container}>
         <StatusBar
           barStyle="light-content"
@@ -176,5 +203,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1b1f23',
+  },
+  customWheelButton: {
+    width: 45,
+    height: 4,
+    borderRadius: 30,
+    backgroundColor: '#1e242b',
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+  },
+  activeWheelButton: {
+    backgroundColor: AllColors.greenColor,
   },
 });

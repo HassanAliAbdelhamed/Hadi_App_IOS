@@ -7,6 +7,7 @@ import quraa from '../assets/Apis/quraa';
 import QaraCard from '../Components/qareCard';
 import SwaraCard from '../Components/swaraCard';
 import AllSwar from '../assets/Apis/AllSwarWithID';
+import Spinner from '../Components/Spinner';
 
 export default function FavoriteScreen() {
   const [activeTab, setActiveTab] = useState('quraa');
@@ -98,46 +99,48 @@ export default function FavoriteScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        {/* <Image source={favIconImg} style={styles.HeaderImg} /> */}
-        <Text style={styles.HeaderText}>المفضلة</Text>
+    // <View style={styles.container}>
+    //   <View style={styles.header}>
+    //     {/* <Image source={favIconImg} style={styles.HeaderImg} /> */}
+    //     <Text style={styles.HeaderText}>المفضلة</Text>
 
-        {/* Toggle Tabs */}
-        <View style={styles.toggleWrapper}>
-          <TouchableOpacity
-            style={[styles.toggleButton, activeTab === 'quraa' && styles.activeToggleButton]}
-            onPress={() => setActiveTab('quraa')}>
-            <Text style={[styles.toggleText, activeTab === 'quraa' && styles.activeToggleText]}>
-              القرآء
-            </Text>
-          </TouchableOpacity>
+    //     {/* Toggle Tabs */}
+    //     <View style={styles.toggleWrapper}>
+    //       <TouchableOpacity
+    //         style={[styles.toggleButton, activeTab === 'quraa' && styles.activeToggleButton]}
+    //         onPress={() => setActiveTab('quraa')}>
+    //         <Text style={[styles.toggleText, activeTab === 'quraa' && styles.activeToggleText]}>
+    //           القرآء
+    //         </Text>
+    //       </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.toggleButton, activeTab === 'suwar' && styles.activeToggleButton]}
-            onPress={() => setActiveTab('suwar')}>
-            <Text style={[styles.toggleText, activeTab === 'suwar' && styles.activeToggleText]}>
-              السور
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    //       <TouchableOpacity
+    //         style={[styles.toggleButton, activeTab === 'suwar' && styles.activeToggleButton]}
+    //         onPress={() => setActiveTab('suwar')}>
+    //         <Text style={[styles.toggleText, activeTab === 'suwar' && styles.activeToggleText]}>
+    //           السور
+    //         </Text>
+    //       </TouchableOpacity>
+    //     </View>
+    //   </View>
+    //   {/* المحتوى حسب التبويب
+    //   {activeTab === 'quraa' ? (
+    //     <FlatList
+    //       data={[{ key: 'favQuraa' }]}
+    //       renderItem={() => <FavQuraaDiv />}
+    //       contentContainerStyle={styles.content}
+    //     />
+    //   ) : (
+    //     <FlatList
+    //       data={[{ key: 'favSurahs' }]}
+    //       renderItem={() => <FavSuwarDiv />}
+    //       contentContainerStyle={styles.content}
+    //     />
+    //   )} */}
+    // </View>
 
-      {/* المحتوى حسب التبويب */}
-      {activeTab === 'quraa' ? (
-        <FlatList
-          data={[{ key: 'favQuraa' }]}
-          renderItem={() => <FavQuraaDiv />}
-          contentContainerStyle={styles.content}
-        />
-      ) : (
-        <FlatList
-          data={[{ key: 'favSurahs' }]}
-          renderItem={() => <FavSuwarDiv />}
-          contentContainerStyle={styles.content}
-        />
-      )}
-    </View>
+      <Spinner />
+
   );
 }
 

@@ -1,179 +1,119 @@
-import quraa from "../assets/Apis/radioQuraa";
+import React, { useState } from "react";
 import {
   FlatList,
   Image,
   RefreshControl,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useFonts } from "expo-font";
-import { useCallback, useState } from "react";
-import SearchInput from "../Components/SearchInput";
-import { useNavigation } from "@react-navigation/native";
-import AllColors from "../assets/Colors";
 import { MaterialIcons } from "@expo/vector-icons";
-// import { useAudio } from 'Components/audioContext';
-import radioIconImg from "../assets/images/readioHeadIcon.png";
+import quraa from "../assets/Apis/radioQuraa";
+import AllColors from "../assets/Colors";
 import playTrack from "../Components/playTrack";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "../Components/Header";
+
 export default function RadioScreen() {
-  // const { playAudio } = useAudio();
-  // Navigation Var
-  const navigate = useNavigation();
-  // Quraa Var
-  const Quraa = quraa;
-  const [allQuraa, setQuraa] = useState(Quraa);
-  // Refresh Var
   const [refreshing, setRefreshing] = useState(false);
 
-  // Search Handler
-  const searchHandler = useCallback(
-    (value) => {
-      if (value) {
-        const filteredData = Quraa.filter((qure) => qure.title.includes(value));
-        setQuraa(filteredData);
-      } else {
-        setQuraa(Quraa);
-      }
-    },
-    [Quraa]
-  );
-
-  // Refreshing handler
   const refreshHandler = () => {
     setRefreshing(true);
-    setQuraa(Quraa);
     setRefreshing(false);
   };
 
-  // Qare Card
-  const QaraCard = ({ cardinfo }) => (
-    <View style={Styles.bodyStyle}>
-      <TouchableOpacity
-        style={Styles.card}
-        onPress={() => {
-          const swaraId = cardinfo.id;
-          const audioSrc = cardinfo.Audiosource;
-          const image = cardinfo.img;
-          const QareTitle = "مباشر";
-          const SwaraTitle = cardinfo.title;
-          playTrack({ swaraId, audioSrc, image, SwaraTitle, QareTitle });
-        }}
-      >
-        <View style={Styles.bodyConainer}>
-          <Image source={{ uri: cardinfo.img }} style={Styles.cardImage} />
-          <View style={Styles.TextsStyle}>
-            <Text style={Styles.cardBoxTitle}>القارئ الشيخ</Text>
-            <Text style={Styles.cardTitle}>{cardinfo.title}</Text>
-          </View>
-        </View>
-        <MaterialIcons name="radio" size={28} style={Styles.icon} />
-      </TouchableOpacity>
-    </View>
+  const handlePlay = (item) => {
+    playTrack({
+      swaraId: item.id,
+      audioSrc: item.Audiosource,
+      image: item.img,
+      SwaraTitle: item.title,
+      QareTitle: "مباشر",
+    });
+  };
+
+  const renderCard = ({ item }) => (
+    <TouchableOpacity
+      style={Styles.card}
+      activeOpacity={0.7}
+      onPress={() => handlePlay(item)}
+    >
+      <Image source={{ uri: item.img }} style={Styles.cardImage} resizeMode="cover" />
+      <View style={Styles.textContainer}>
+        <Text style={Styles.subtitle}>القارئ الشيخ</Text>
+        <Text style={Styles.title} numberOfLines={2}>
+          {item.title}
+        </Text>
+      </View>
+      <MaterialIcons name="radio" size={24} color={AllColors.greenColor} style={Styles.icon} />
+    </TouchableOpacity>
   );
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: AllColors.BlackBackgroundColor }}>
     <View style={Styles.container}>
-      <View style={Styles.Header}>
-        <Image source={radioIconImg} style={Styles.HeaderImg} />
-        <SearchInput
-          searchHandler={searchHandler}
-          title="أكتب أسم القارئ...."
-        />
-      </View>
+      <Header title="الراديو" />
       <FlatList
-        data={allQuraa}
-        renderItem={({ item }) => <QaraCard cardinfo={item} />}
-        keyExtractor={(item, index) => item.id.toString()}
+        data={quraa}
+        renderItem={renderCard}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        contentContainerStyle={Styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={refreshHandler} />
         }
       />
     </View>
+    </SafeAreaView>
+
   );
 }
 
 const Styles = StyleSheet.create({
   container: {
-    flex: 2,
-    backgroundColor: AllColors.BlackBackgroundColor,
-  },
-  Header: {
-    backgroundColor: AllColors.shadowblackColor,
-    paddingVertical: 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  HeaderImg: {
-    marginTop: -30,
-    marginRight: "auto",
-    marginLeft: "auto",
-    position: "relative",
-    top: 20,
-    width: 300,
-    height: 210,
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
-  bodyStyle: {
-    backgroundColor: AllColors.BlackBackgroundColor,
-    paddingHorizontal: 8,
     flex: 1,
+    backgroundColor: AllColors.blackCardColor,
   },
-  row: {
-    justifyContent: "space-between",
-    marginBottom: 16,
+  listContent: {
+    padding: 8,
   },
   card: {
-    marginTop: 5,
-    width: "100%",
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    marginBottom: 12,
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    margin: 8,
+    aspectRatio: 1,
+    backgroundColor: AllColors.BlackBackgroundColor,
+    borderRadius: 16,
+    overflow: "hidden", // مهم لجعل حواف الصورة متناسقة مع حواف الكارد
     borderWidth: 1,
-    width: "100%",
-    backgroundColor: "#27292f",
-  },
-  bodyConainer: {
-    flex: 1,
-    flexDirection: "row",
   },
   cardImage: {
-    width: 75,
-    height: 75,
-    borderRadius: 50,
-    marginHorizontal: 10,
-    borderColor: AllColors.greenColor,
-    borderWidth: 1,
+    width: "100%",
+    height: "60%", // تأخذ 60% من طول الكارد
   },
-  cardBoxTitle: {
+  textContainer: {
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  subtitle: {
     fontSize: 10,
-    color: "white",
-    textAlign: "left",
+    color: "#AAA",
+    marginBottom: 2,
   },
-  cardTitle: {
-    fontSize: 16,
-    color: "white",
-    textAlign: "left",
-    fontWeight: "600",
+  title: {
+    fontSize: 13,
+    color: "#FFF",
+    textAlign: "center",
     fontFamily: "Cairo",
   },
-  TextsStyle: {
-    flex: 1,
-    justifyContent: "center",
-    alignContent: "center",
-    flexDirection: "column",
-  },
   icon: {
-    padding: 5,
-    color: AllColors.greenColor,
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 12,
+    padding: 2,
   },
 });

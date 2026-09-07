@@ -27,9 +27,7 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
             }
 
-          // FIXED: Must return "index" for React Native CLI metro bundler
-          // (was ".expo/.virtual-metro-entry" which is Expo-Go-specific)
-          override fun getJSMainModuleName(): String = "index"
+          override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
 
           override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
 

@@ -1,41 +1,39 @@
-import  React, { useEffect, useState } from "react";
-import {Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { AntDesign, MaterialIcons } from '@expo/vector-icons';
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import AllColors from "../assets/Colors";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-  // Card Component
-  const QaraCard =({ cardinfo ,facIconState}) => {
-    const [isFavorite, setIsFavorite] = useState(false);
-    const navigate = useNavigation();
+const QaraCard = ({ cardinfo, facIconState, horizontal }) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const navigate = useNavigation();
 
-    useEffect(() => {
-      const checkFavorite = async () => {
-        try {
-          const favData = await AsyncStorage.getItem('FavQuraa');
-          if (favData) {
-            const favList = JSON.parse(favData);
-            setIsFavorite(favList.includes(cardinfo.id));
-          }
-        } catch (e) {
-          console.warn("Error checking favorites:", e.message);
+  useEffect(() => {
+    const checkFavorite = async () => {
+      try {
+        const favData = await AsyncStorage.getItem('FavQuraa');
+        if (favData) {
+          const favList = JSON.parse(favData);
+          setIsFavorite(favList.includes(cardinfo.id));
         }
-      };
-      checkFavorite();
-    }, [cardinfo.id]);
-
-    const handleToggleFavorite = async () => {
-      const newValue = !isFavorite;
-      setIsFavorite(newValue);
-      if (newValue) {
-        await addQareToFav(cardinfo.id);
-      } else {
-        await removeQareFromFav(cardinfo.id);
+      } catch (e) {
+        console.warn("Error checking favorites:", e.message);
       }
     };
+    checkFavorite();
+  }, [cardinfo.id]);
 
-      // REMOVE from favorites
+  const handleToggleFavorite = async () => {
+    const newValue = !isFavorite;
+    setIsFavorite(newValue);
+    if (newValue) {
+      await addQareToFav(cardinfo.id);
+    } else {
+      await removeQareFromFav(cardinfo.id);
+    }
+  };
+
   const removeQareFromFav = async (id) => {
     try {
       const existingFavQuraa = await AsyncStorage.getItem('FavQuraa');
@@ -43,14 +41,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
         let favQuraaArr = JSON.parse(existingFavQuraa);
         const updatedFav = favQuraaArr.filter((qareId) => qareId !== id);
         await AsyncStorage.setItem('FavQuraa', JSON.stringify(updatedFav));
-        // console.log(`Removed ${id} from favorites`);
       }
     } catch (e) {
       console.log(`Error removing ${id} from favorites`);
     }
   };
 
-  // Add to favorite
   const addQareToFav = async (id) => {
     try {
       const existingFavQuraa = await AsyncStorage.getItem('FavQuraa');
@@ -58,7 +54,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
       if (existingFavQuraa != null) {
         favQuraaArr = JSON.parse(existingFavQuraa);
       }
-      // Avoid duplicates
       if (!favQuraaArr.includes(id)) {
         favQuraaArr.push(id);
         await AsyncStorage.setItem('FavQuraa', JSON.stringify(favQuraaArr));
@@ -68,58 +63,52 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
     }
   };
 
+  // شكل عمودي (دايرة + اسم تحتها) زي كروت "الأكثر استماعاً" في التصميم
+  if (horizontal) {
     return (
-      <View style={Styles.bodyStyle}>
-        <TouchableOpacity
-          style={Styles.card}
-          onPress={() => navigate.navigate('qarePage', { id: cardinfo.id - 1 })}>
-          <View style={Styles.bodyConainer}>
-            <Image  source={{uri:cardinfo.img}}   tint="light"   style={Styles.cardImage} />
-            <View style={Styles.TextsStyle}>
-              <Text style={Styles.cardBoxTitle}>القارئ الشيخ</Text>
-              <Text style={Styles.cardTitle}>{cardinfo.title}</Text>
-            </View>
-          </View>
+      <TouchableOpacity
+        style={Styles.verticalCard}
+        onPress={() => navigate.navigate('qarePage', { id: cardinfo.id - 1 })}
+      >
+        <Image source={{ uri: cardinfo.img }} style={Styles.verticalImage} />
+        <Text style={Styles.verticalTitle} numberOfLines={1}>{cardinfo.title}</Text>
+        {cardinfo.subtitle ? (
+          <Text style={Styles.verticalSubtitle} numberOfLines={1}>{cardinfo.subtitle}</Text>
+        ) : null}
+      </TouchableOpacity>
+    );
+  }
 
-          <MaterialIcons name="headphones" size={26} style={Styles.icon} />
-          {facIconState&&
-            <TouchableOpacity onPress={handleToggleFavorite}>
-            <AntDesign
-              name={isFavorite ? 'heart' : 'hear'}
+  return (
+    <View style={Styles.bodyStyle}>
+      <TouchableOpacity
+        style={Styles.card}
+        onPress={() => navigate.navigate('qarePage', { id: cardinfo.id - 1 })}>
+        <View style={Styles.bodyConainer}>
+          <Image source={{ uri: cardinfo.img }} style={Styles.cardImage} />
+          <View style={Styles.TextsStyle}>
+            <Text style={Styles.cardBoxTitle}>القارئ الشيخ</Text>
+            <Text style={Styles.cardTitle}>{cardinfo.title}</Text>
+          </View>
+        </View>
+
+        <MaterialIcons name="headphones" size={26} style={Styles.icon} />
+        {/* {facIconState &&
+          <TouchableOpacity onPress={handleToggleFavorite}>
+            <FontAwesome
+              name={isFavorite ? 'heart' : 'heart-o'}
               size={23}
               color={isFavorite ? 'red' : 'white'}
               style={Styles.icon}
             />
           </TouchableOpacity>
-          }
-          
-        </TouchableOpacity>
-      </View>
-    );
-  };
-  const Styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AllColors.BlackBackgroundColor,
-    direction: 'rtl',
-  },
-  Header: {
-    backgroundColor: AllColors.shadowblackColor,
-    padding: 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  HeaderText: {
-    textAlign: 'center',
-    color: AllColors.whiteColor,
-    fontSize: 25,
-    fontFamily: 'Cairo',
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
+        } */}
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const Styles = StyleSheet.create({
   bodyStyle: {
     backgroundColor: AllColors.BlackBackgroundColor,
     paddingHorizontal: 8,
@@ -128,14 +117,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
   card: {
     marginTop: 5,
     width: '100%',
-    borderRadius: 50,
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 8,
     marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#27292f',
+    backgroundColor: '#1a1919',
   },
   bodyConainer: {
     flex: 1,
@@ -145,7 +134,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
     width: 75,
     height: 75,
     borderRadius: 50,
-    marginHorizontal:10,
+    marginHorizontal: 10,
     borderColor: AllColors.greenColor,
     borderWidth: 1,
   },
@@ -171,5 +160,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
     padding: 5,
     color: AllColors.greenColor,
   },
+  verticalCard: {
+    width: 110,
+    marginHorizontal: 6,
+    alignItems: 'center',
+  },
+  verticalImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderColor: AllColors.greenColor,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  verticalTitle: {
+    fontSize: 13,
+    color: 'white',
+    fontWeight: '600',
+    fontFamily: 'Cairo',
+    textAlign: 'center',
+  },
+  verticalSubtitle: {
+    fontSize: 10,
+    color: AllColors.greenColor,
+    textAlign: 'center',
+  },
 });
-  export default React.memo(QaraCard)
+
+export default React.memo(QaraCard);

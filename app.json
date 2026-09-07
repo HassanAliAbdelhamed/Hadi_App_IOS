@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "قران +",
+    "name": "آية بلس",
     "slug": "quran-plus",
     "version": "1.2.0",
     "orientation": "portrait",
-    "icon": "./assets/images/AppIcon.png",
+    "icon": "./assets/images/Logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/AppIcon.png",
+      "image": "./assets/images/Logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#28292e"
+      "backgroundColor": "#141515"
     },
     "ios": {
       "supportsTablet": true
@@ -18,8 +18,8 @@
     "android": {
       "package": "com.hassanali2.quranplus",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/AppIcon.png",
-        "backgroundColor": "#28292e"
+        "foregroundImage": "./assets/images/Logo.png",
+        "backgroundColor": "#141515"
       },
       "permissions": [
         "INTERNET",
@@ -30,7 +30,7 @@
       ]
     },
     "web": {
-      "bundler": "metro",
+      "bundler": "metro", 
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },

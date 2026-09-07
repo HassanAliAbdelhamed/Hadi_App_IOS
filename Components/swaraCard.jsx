@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
-import { AntDesign, MaterialIcons } from "@expo/vector-icons";
+import { AntDesign, FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Colors from "../assets/Colors";
 import playTrack from "./playTrack";
@@ -131,8 +131,8 @@ import playTrack from "./playTrack";
             />
             {facIconState && (
               <TouchableOpacity onPress={handleToggleFavorite}>
-                <AntDesign
-                  name={isFavorite ? "heart" : "hear"}
+                <FontAwesome
+                  name={isFavorite ? "heart" : "heart-o"}
                   size={23}
                   color={isFavorite ? "red" : "white"}
                   style={styles.icon}

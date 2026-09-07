@@ -1,65 +1,198 @@
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   RefreshControl,
+  ScrollView,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
 } from "react-native";
-import quraa from "../assets/Apis/quraa";
-import { useCallback, useState } from "react";
-import SearchInput from "../Components/SearchInput";
+import { useCallback, useEffect, useState } from "react";
 import AllColors from "../assets/Colors";
 import QaraCard from "../Components/qareCard";
-import homeIconImg from "../assets/images/homeIconImage.png";
+import { getAllQuraa, getQuraaByNationality } from "../assets/Apis/quraaApi";
+import { SafeAreaView } from "react-native-safe-area-context";
+import QuraaMostListened from "../Components/QuraaMostListened";
+import Header from "../Components/Header";
+import TodayRecitationCard from "../Components/TodayRecitationCard";
+
+const NATIONALITY_EGYPT_ID = 4;
+const NATIONALITY_SAUDI_ID = 1;
+const NATIONALITY_SUDAN_ID = 7;
+const NATIONALITY_PALESTINE_ID = 16;
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const Quraa = quraa;
-  const [allQuraa, setQuraa] = useState(Quraa);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false); // حالة متابعة الخطأ
 
-  // Search Handler
-  const searchHandler = useCallback(
-    (value) => {
-      if (value) {
-        const filteredData = Quraa.filter((qure) => qure.title.includes(value));
-        setQuraa(filteredData);
-      } else {
-        setQuraa(Quraa);
-      }
-    },
-    [Quraa]
-  );
+  const [allQuraa, setAllQuraa] = useState([]);
+  const [filteredQuraa, setFilteredQuraa] = useState([]);
+  const [egyptianQuraa, setEgyptianQuraa] = useState([]);
+  const [saudiQuraa, setSaudiQuraa] = useState([]);
+  const [sudaneseQuraa, setSudaneseQuraa] = useState([]);
+  const [palestinianQuraa, setPalestinianQuraa] = useState([]);
 
-  // Refresh Handler
-  const refreshHandler = () => {
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(false); // إعادة ضبط حالة الخطأ عند البدء
+
+    try {
+      // جلب كل البيانات بطلب واحد متوازي
+      const [all, egyptians, saudis, sudanese, palestinians] = await Promise.all([
+        getAllQuraa(),
+        getQuraaByNationality(NATIONALITY_EGYPT_ID),
+        getQuraaByNationality(NATIONALITY_SAUDI_ID),
+        getQuraaByNationality(NATIONALITY_SUDAN_ID),
+        getQuraaByNationality(NATIONALITY_PALESTINE_ID),
+      ]);
+
+      setAllQuraa(all);
+      setFilteredQuraa(all);
+      setEgyptianQuraa(egyptians);
+      setSaudiQuraa(saudis);
+      setSudaneseQuraa(sudanese);
+      setPalestinianQuraa(palestinians);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(true); // تفعيل حالة الخطأ في حالة انقطاع النت أو فشل الطلب
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const refreshHandler = async () => {
     setRefreshing(true);
-    setQuraa(Quraa);
+    await loadData();
     setRefreshing(false);
   };
 
   return (
-    <View style={Styles.container}>
-      <View style={Styles.Header}>
-        <Image source={homeIconImg} style={Styles.HeaderImg} />
-        <SearchInput searchHandler={searchHandler} title="أكتب اسم القارئ..." />
-      </View>
-
-      <FlatList
-        data={allQuraa}
-        renderItem={({ item }) => (
-          <QaraCard cardinfo={item} facIconState={true} />
-        )}
-        keyExtractor={(item) => item.id.toString()}
+    <SafeAreaView style={{ flex: 1, backgroundColor: AllColors.BlackBackgroundColor }}>
+      <ScrollView
+        style={Styles.container}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={refreshHandler} />
         }
-        contentContainerStyle={Styles.listContainer}
-        initialNumToRender={10} // عدد العناصر التي يتم عرضها مبدأيًا
-        maxToRenderPerBatch={10} // أقصى عدد يتم تحميله في كل دفعة
-        windowSize={5} // عدد الشاشات المسبقة التي يتم تحضيرها
-        removeClippedSubviews={true}
-      />
-    </View>
+      >
+        <Header />
+
+        {/* 1. حالة التحميل */}
+        {loading ? (
+          <View style={Styles.centerContainer}>
+            <ActivityIndicator size="large" color={AllColors.greenColor} />
+            <Text style={Styles.statusText}>جاري التحميل...</Text>
+          </View>
+        ) : error ? (
+          /* 2. حالة وجود خطأ أو انقطاع الإنترنت */
+          <View style={Styles.centerContainer}>
+            <Text style={Styles.errorText}>
+              حدث خطأ في الاتصال، يرجى التأكد من شبكة الإنترنت ومحاولة مرة أخرى.
+            </Text>
+            <TouchableOpacity style={Styles.retryButton} onPress={loadData}>
+              <Text style={Styles.retryButtonText}>إعادة المحاولة</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /* 3. عرض المحتوى بعد نجاح جلب البيانات */
+          <>
+            <TodayRecitationCard/>
+            {/* قراء مصريين */}
+            {egyptianQuraa.length > 0 && (
+              <View style={Styles.sectionContainer}>
+                <View style={Styles.sectionHeaderRow}>
+                  <TouchableOpacity>
+                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                  </TouchableOpacity>
+                  <Text style={Styles.sectionTitle}>قراء مصريين</Text>
+                </View>
+                <FlatList
+                  data={egyptianQuraa}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => `egypt-${item.id}`}
+                  renderItem={({ item }) => (
+                    <QuraaMostListened cardinfo={item} horizontal facIconState={false} />
+                  )}
+                  contentContainerStyle={{ paddingHorizontal: 8 }}
+                />
+              </View>
+            )}
+
+            {/* قراء سعوديين */}
+            {saudiQuraa.length > 0 && (
+              <View style={Styles.sectionContainer}>
+                <View style={Styles.sectionHeaderRow}>
+                  <TouchableOpacity>
+                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                  </TouchableOpacity>
+                  <Text style={Styles.sectionTitle}>قراء سعوديين</Text>
+                </View>
+                <FlatList
+                  data={saudiQuraa}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => `saudi-${item.id}`}
+                  renderItem={({ item }) => (
+                    <QaraCard cardinfo={item} horizontal facIconState={false} />
+                  )}
+                  contentContainerStyle={{ paddingHorizontal: 8 }}
+                />
+              </View>
+            )}
+
+            {/* قراء سودانيين */}
+            {sudaneseQuraa.length > 0 && (
+              <View style={Styles.sectionContainer}>
+                <View style={Styles.sectionHeaderRow}>
+                  <TouchableOpacity>
+                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                  </TouchableOpacity>
+                  <Text style={Styles.sectionTitle}>قراء سودانيين</Text>
+                </View>
+                <FlatList
+                  data={sudaneseQuraa}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => `sudan-${item.id}`}
+                  renderItem={({ item }) => (
+                    <QaraCard cardinfo={item} horizontal facIconState={false} />
+                  )}
+                  contentContainerStyle={{ paddingHorizontal: 8 }}
+                />
+              </View>
+            )}
+
+            {/* قراء فلسطينيين */}
+            {palestinianQuraa.length > 0 && (
+              <View style={Styles.sectionContainer}>
+                <View style={Styles.sectionHeaderRow}>
+                  <TouchableOpacity>
+                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                  </TouchableOpacity>
+                  <Text style={Styles.sectionTitle}>قراء فلسطينيين</Text>
+                </View>
+                <FlatList
+                  data={palestinianQuraa}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => `palestine-${item.id}`}
+                  renderItem={({ item }) => (
+                    <QaraCard cardinfo={item} horizontal facIconState={false} />
+                  )}
+                  contentContainerStyle={{ paddingHorizontal: 8 }}
+                />
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -69,68 +202,62 @@ const Styles = StyleSheet.create({
     backgroundColor: AllColors.BlackBackgroundColor,
     direction: "rtl",
   },
-  Header: {
-    backgroundColor: AllColors.shadowblackColor,
-    paddingVertical: 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    // marginHorizontal:'auto',
+  sectionContainer: {
+    marginTop: 20,
+    marginBottom: 8,
   },
-  HeaderImg: {
-    alignSelf: "center",
-    marginTop: -50,
-    position: "relative",
-    top: 0,
-    width: 400,
-    height: 230,
+  sectionHeaderRow: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  sectionTitle: {
+    color: "white",
+    fontSize: 18,
+    fontFamily: "Cairo",
+  },
+  showAllText: {
+    color: AllColors.greenColor,
+    fontSize: 13,
+    fontFamily: "Cairo",
   },
   listContainer: {
     paddingBottom: 20,
   },
-  card: {
-    marginTop: 5,
-    width: "100%",
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
+  // الأنماط المضافة لحالات التحميل والخطأ
+  centerContainer: {
+    padding: 40,
     alignItems: "center",
-    backgroundColor: "#27292f",
-  },
-  bodyConainer: {
-    flex: 1,
-    flexDirection: "row",
-  },
-  cardImage: {
-    width: 75,
-    height: 75,
-    borderRadius: 50,
-    marginLeft: 20,
-    borderColor: AllColors.greenColor,
-    borderWidth: 1,
-  },
-  cardBoxTitle: {
-    fontSize: 10,
-    color: "white",
-    textAlign: "left",
-  },
-  cardTitle: {
-    fontSize: 16,
-    color: "white",
-    textAlign: "left",
-    fontWeight: "600",
-    fontFamily: "Cairo",
-  },
-  TextsStyle: {
-    flex: 1,
     justifyContent: "center",
-    alignContent: "center",
-    flexDirection: "column",
+    marginTop: 50,
   },
-  icon: {
-    padding: 5,
-    color: AllColors.greenColor,
+  statusText: {
+    color: "white",
+    fontSize: 16,
+    fontFamily: "Cairo",
+    marginTop: 12,
+  },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 15,
+    fontFamily: "Cairo",
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: AllColors.greenColor,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontFamily: "Cairo",
+    fontWeight: "bold",
   },
 });
