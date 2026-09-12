@@ -109,10 +109,12 @@ import playTrack from "./playTrack";
     <View style={styles.swaraItem}>
       <TouchableOpacity
         onPress={() => {
-          const swaraId = convertToThreeDigitString(cardInfo.id);
-          const audioSrc = currentRwayah
-            ? `${currentRwayah.link}${swaraId}.mp3`
-            : `${QareCard.Audiosource}${swaraId}.mp3`;
+          const swaraId = cardInfo.id;
+          const audioSrc = cardInfo.audioUrl || (
+            currentRwayah?.link
+              ? `${currentRwayah.link}${convertToThreeDigitString(cardInfo.id)}.mp3`
+              : `${QareCard.Audiosource}${convertToThreeDigitString(cardInfo.id)}.mp3`
+          );
           const image = QareCard.img;
           let SwaraTitle = cardInfo.title;
           let QareTitle = QareCard.title;

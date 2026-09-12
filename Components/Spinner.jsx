@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { G, Path, Circle } from 'react-native-svg';
+import * as d3Shape from 'd3-shape';
+
 import Logo from '../assets/images/Logo.png';
 import AllColors from '../assets/Colors';
 
@@ -18,58 +20,64 @@ const { width } = Dimensions.get('window');
 const SIZE = Math.min(width * 0.85, 360);
 const CENTER = SIZE / 2;
 const RADIUS = CENTER - 4;
-const EXTRA_FULL_TURNS = 5;
+const INNER_RADIUS = 38;
+
 const SPIN_DURATION = 4500;
+const FULL_SPINS = 5;
+
+const LABEL_WIDTH = 92;
+const LABEL_HEIGHT = 38;
+
+const ACCENT_COLOR = '#FFD700';
 
 const Spinner = ({ items = [], onFinish, disabled = false }) => {
   const rotate = useRef(new Animated.Value(0)).current;
-  const currentRotation = useRef(0);
   const spinningRef = useRef(false);
 
   const [spinning, setSpinning] = useState(false);
+  const [winnerIndex, setWinnerIndex] = useState(null);
+
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardScale = useRef(new Animated.Value(0.85)).current;
 
   const count = items.length;
-  const angle = count ? 360 / count : 0;
+  const angleOffset = count > 0 ? 360 / count / 2 : 0;
 
-  const point = (deg, radius = RADIUS) => {
-    const rad = ((deg - 90) * Math.PI) / 180;
+  const wheelPaths = useMemo(() => {
+    if (!count) return [];
 
-    return {
-      x: CENTER + radius * Math.cos(rad),
-      y: CENTER + radius * Math.sin(rad),
-    };
-  };
+    const data = Array.from({ length: count }).fill(1);
+    const arcs = d3Shape.pie()(data);
 
-  const slicePath = (start, end) => {
-    const a = point(end);
-    const b = point(start);
+    const arcGenerator = d3Shape
+      .arc()
+      .outerRadius(RADIUS)
+      .innerRadius(INNER_RADIUS);
 
-    return `
-      M ${CENTER} ${CENTER}
-      L ${a.x} ${a.y}
-      A ${RADIUS} ${RADIUS} 0 0 0 ${b.x} ${b.y}
-      Z
-    `;
-  };
+    return arcs.map((arc, index) => ({
+      path: arcGenerator(arc),
+      centroid: arcGenerator.centroid(arc),
+      index,
+    }));
+  }, [count]);
 
   const spin = () => {
     if (spinningRef.current || disabled || count === 0) return;
 
     spinningRef.current = true;
     setSpinning(true);
+    setWinnerIndex(null);
 
-    const winner = Math.floor(Math.random() * count);
-    const winnerCenter = winner * angle + angle / 2;
+    cardOpacity.setValue(0);
+    cardScale.setValue(0.85);
 
-    const current = ((currentRotation.current % 360) + 360) % 360;
-    const target = (360 - winnerCenter) % 360;
-    const delta = (target - current + 360) % 360;
-
-    const finalRotation =
-      currentRotation.current + EXTRA_FULL_TURNS * 360 + delta;
+    // العجلة مجرد ديكور بتلف بشكل عشوائي بالكامل، مفيش علاقة بينها وبين الفايز
+    const selectedWinner = Math.floor(Math.random() * count);
+    const randomRotation = Math.random() * 360;
+    const rotationAmount = FULL_SPINS * 360 + randomRotation;
 
     Animated.timing(rotate, {
-      toValue: finalRotation,
+      toValue: rotationAmount,
       duration: SPIN_DURATION,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
@@ -79,88 +87,93 @@ const Spinner = ({ items = [], onFinish, disabled = false }) => {
 
       if (!finished) return;
 
-      currentRotation.current = finalRotation;
-      rotate.setValue(finalRotation);
+      setWinnerIndex(selectedWinner);
 
-      onFinish?.(items[winner], winner);
+      Animated.parallel([
+        Animated.timing(cardOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(cardScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 90,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      onFinish?.(items[selectedWinner], selectedWinner);
     });
   };
 
   const rotation = rotate.interpolate({
-    inputRange: [-360, 0, 360, 720, 1080, 1440, 1800, 2160],
-    outputRange: [
-      '-360deg',
-      '0deg',
-      '360deg',
-      '720deg',
-      '1080deg',
-      '1440deg',
-      '1800deg',
-      '2160deg',
-    ],
+    inputRange: [0, 3600],
+    outputRange: ['0deg', '3600deg'],
+    extrapolate: 'extend',
   });
 
   return (
     <View style={styles.container}>
       <View style={styles.wheelArea}>
-        <View style={styles.pointer}>
-          <View style={styles.arrow} />
-        </View>
-
         <Animated.View
           style={[styles.wheel, { transform: [{ rotate: rotation }] }]}
         >
-          <Svg width={SIZE} height={SIZE}>
-            {items.map((item, i) => (
-              <Path
-                key={item.id ?? i}
-                d={slicePath(i * angle, (i + 1) * angle)}
-                fill={
-                  i % 2 === 0
-                    ? AllColors.greenColor
-                    : AllColors.whiteColor
-                }
-                stroke="#2A2A2A"
-                strokeWidth={6}
-              />
-            ))}
+          <View
+            style={[
+              styles.wheelContent,
+              { transform: [{ rotate: `-${angleOffset}deg` }] },
+            ]}
+          >
+            <Svg width={SIZE} height={SIZE}>
+              <G x={CENTER} y={CENTER}>
+                {wheelPaths.map((arc, i) => (
+                  <Path
+                    key={items[i]?.id ?? i}
+                    d={arc.path}
+                    fill={i % 2 === 0 ? AllColors.greenColor : AllColors.whiteColor}
+                    stroke="#2A2A2A"
+                    strokeWidth={3}
+                  />
+                ))}
 
-            <Circle
-              cx={CENTER}
-              cy={CENTER}
-              r={38}
-              fill="#141515"
-              stroke={AllColors.greenColor}
-              strokeWidth={3}
-            />
-          </Svg>
+                <Circle
+                  cx={0}
+                  cy={0}
+                  r={INNER_RADIUS}
+                  fill="#141515"
+                  stroke={AllColors.greenColor}
+                  strokeWidth={3}
+                />
+              </G>
+            </Svg>
 
-          {items.map((item, i) => {
-            const pos = point(
-              i * angle + angle / 2,
-              RADIUS * 0.62
-            );
+            {wheelPaths.map((arc, i) => {
+              const [x, y] = arc.centroid;
 
-            return (
-              <View
-                key={item.id ?? i}
-                style={[
-                  styles.label,
-                  {
-                    left: pos.x - 45,
-                    top: pos.y - 15,
-                  },
-                ]}
-              >
-                <Text
-                  style={styles.labelText}
-                  numberOfLines={1}
+              return (
+                <View
+                  key={`label-${items[i]?.id ?? i}`}
+                  style={[
+                    styles.label,
+                    {
+                      left: CENTER + x - LABEL_WIDTH / 2,
+                      top: CENTER + y - LABEL_HEIGHT / 2,
+                    },
+                  ]}
                 >
-                  {item.title}
-                </Text>
-              </View>
-            );
-          })}
+                  <Text
+                    style={styles.labelText}
+                    numberOfLines={2}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.65}
+                  >
+                    {items[i]?.title ?? ''}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
 
           <View style={styles.centerText}>
             <Image source={Logo} style={styles.centerImage} />
@@ -196,30 +209,8 @@ const styles = StyleSheet.create({
   wheelArea: {
     width: SIZE,
     height: SIZE,
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  pointer: {
-    position: 'absolute',
-    top: -2,
-    left: CENTER - 14,
-    width: 28,
-    height: 28,
-    zIndex: 20,
-    alignItems: 'center',
-  },
-
-  arrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 14,
-    borderRightWidth: 14,
-    borderTopWidth: 28,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#FFD700',
   },
 
   wheel: {
@@ -228,20 +219,26 @@ const styles = StyleSheet.create({
     borderRadius: SIZE / 2,
   },
 
+  wheelContent: {
+    width: SIZE,
+    height: SIZE,
+  },
+
   label: {
     position: 'absolute',
-    width: 90,
-    height: 30,
+    width: LABEL_WIDTH,
+    height: LABEL_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 2,
   },
 
   labelText: {
     color: AllColors.blackColor,
     fontFamily: 'Cairo',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 11,
     textAlign: 'center',
+    writingDirection: 'rtl',
   },
 
   centerText: {
@@ -263,13 +260,59 @@ const styles = StyleSheet.create({
     height: 80,
   },
 
+  resultCard: {
+    marginTop: 22,
+    minWidth: 230,
+    maxWidth: SIZE,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    borderRadius: 20,
+    backgroundColor: '#1D2A24',
+    borderWidth: 1.5,
+    borderColor: ACCENT_COLOR,
+    alignItems: 'center',
+  },
+
+  resultBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: ACCENT_COLOR,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+
+  resultBadgeIcon: {
+    color: '#141515',
+    fontFamily: 'Cairo',
+    fontSize: 18,
+  },
+
+  resultLabel: {
+    color: ACCENT_COLOR,
+    fontFamily: 'Cairo',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+
+  resultName: {
+    color: '#FFFFFF',
+    fontFamily: 'Cairo',
+    fontSize: 18,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+
   button: {
-    marginTop: 35,
+    marginTop: 25,
     minWidth: 170,
     paddingVertical: 14,
+    paddingHorizontal: 30,
     borderRadius: 30,
     backgroundColor: AllColors.greenColor,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 
   disabled: {
@@ -278,8 +321,8 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: AllColors.whiteColor,
+    fontFamily: 'Cairo',
     fontSize: 17,
-    fontWeight: '700',
   },
 });
 

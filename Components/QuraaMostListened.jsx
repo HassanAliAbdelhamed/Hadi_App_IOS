@@ -1,74 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import AllColors from "../assets/Colors";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const QuraaMostListened = ({ cardinfo, facIconState, horizontal }) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+const QuraaMostListened = ({ cardinfo, horizontal }) => {
   const navigate = useNavigation();
 
-  useEffect(() => {
-    const checkFavorite = async () => {
-      try {
-        const favData = await AsyncStorage.getItem('FavQuraa');
-        if (favData) {
-          const favList = JSON.parse(favData);
-          setIsFavorite(favList.includes(cardinfo.id));
-        }
-     } catch (e) {
-        console.warn("Error checking favorites:", e.message);
-      }
-    };
-    checkFavorite();
-  }, [cardinfo.id]);
-
-  const handleToggleFavorite = async () => {
-    const newValue = !isFavorite;
-    setIsFavorite(newValue);
-    if (newValue) {
-      await addQareToFav(cardinfo.id);
-    } else {
-      await removeQareFromFav(cardinfo.id);
-    }
-  };
-
-  const removeQareFromFav = async (id) => {
-    try {
-      const existingFavQuraa = await AsyncStorage.getItem('FavQuraa');
-      if (existingFavQuraa !== null) {
-        let favQuraaArr = JSON.parse(existingFavQuraa);
-        const updatedFav = favQuraaArr.filter((qareId) => qareId !== id);
-        await AsyncStorage.setItem('FavQuraa', JSON.stringify(updatedFav));
-      }
-    } catch (e) {
-      console.log(`Error removing ${id} from favorites`);
-    }
-  };
-
-  const addQareToFav = async (id) => {
-    try {
-      const existingFavQuraa = await AsyncStorage.getItem('FavQuraa');
-      let favQuraaArr = [];
-      if (existingFavQuraa != null) {
-        favQuraaArr = JSON.parse(existingFavQuraa);
-      }
-      if (!favQuraaArr.includes(id)) {
-        favQuraaArr.push(id);
-        await AsyncStorage.setItem('FavQuraa', JSON.stringify(favQuraaArr));
-      }
-    } catch (e) {
-      console.log(`Error adding ${id} to favorite quraa`);
-    }
-  };
-
-  // شكل عمودي (دايرة + اسم تحتها) زي كروت "الأكثر استماعاً" في التصميم
   if (horizontal) {
     return (
       <TouchableOpacity
         style={Styles.verticalCard}
-        onPress={() => navigate.navigate('qarePage', { id: cardinfo.id - 1 })}
+        onPress={() => navigate.navigate('qarePage', { id: cardinfo.id })}
       >
         <Image source={{ uri: cardinfo.img }} style={Styles.verticalImage} />
         <Text style={Styles.verticalTitle} numberOfLines={1}>{cardinfo.title}</Text>
@@ -79,12 +22,11 @@ const QuraaMostListened = ({ cardinfo, facIconState, horizontal }) => {
     );
   }
 
-  // الشكل الأفقي الأصلي (المستخدم في القوائم الطولية)
   return (
     <View style={Styles.bodyStyle}>
       <TouchableOpacity
         style={Styles.card}
-        onPress={() => navigate.navigate('qarePage', { id: cardinfo.id - 1 })}>
+        onPress={() => navigate.navigate('qarePage', { id: cardinfo.id })}>
         <View style={Styles.bodyConainer}>
           <Image source={{ uri: cardinfo.img }} style={Styles.cardImage} />
           <View style={Styles.TextsStyle}>
@@ -94,16 +36,6 @@ const QuraaMostListened = ({ cardinfo, facIconState, horizontal }) => {
         </View>
 
         <MaterialIcons name="headphones" size={26} style={Styles.icon} />
-        {facIconState &&
-          <TouchableOpacity onPress={handleToggleFavorite}>
-            <FontAwesome
-              name={isFavorite ? 'heart' : 'heart-o'}
-              size={23}
-              color={isFavorite ? 'red' : 'white'}
-              style={Styles.icon}
-            />
-          </TouchableOpacity>
-        }
       </TouchableOpacity>
     </View>
   );

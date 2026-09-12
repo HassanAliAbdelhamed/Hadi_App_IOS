@@ -1,5 +1,5 @@
 // context/audioContext.js
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import TrackPlayer, {
   useProgress,
   State,
@@ -35,7 +35,7 @@ export const AudioProvider = ({ children }) => {
           console.log("TrackPlayer already initialized");
           setPlayerReady(true);
           return;
-        } catch (e) {
+          } catch (_e) {
           // Player not setup yet, continue with setup
         }
 
@@ -117,7 +117,7 @@ export const AudioProvider = ({ children }) => {
     fetchTrack();
   }, [playerReady]);
 
-  const togglePlayPause = async () => {
+  const togglePlayPause = useCallback(async () => {
     try {
       // Use playbackState from hook instead of deprecated TrackPlayer.getState()
       if (playbackState?.state === State.Playing) {
@@ -128,32 +128,39 @@ export const AudioProvider = ({ children }) => {
     } catch (e) {
       console.warn("Error toggling play/pause:", e.message);
     }
-  };
+  }, [playbackState?.state]);
 
-  const seekTo = async (value) => {
+  const seekTo = useCallback(async (value) => {
     try {
       await TrackPlayer.seekTo(value);
     } catch (e) {
       console.warn("Error seeking:", e.message);
     }
-  };
+  }, []);
 
   const isPlaying = playbackState?.state === State.Playing;
+  const contextValue = useMemo(() => ({
+    isPlaying,
+    togglePlayPause,
+    currentAudio: currentInfo !== null,
+    currentInfo,
+    position: progress.position,
+    duration: progress.duration,
+    seekTo,
+    isExpanded,
+    setIsExpanded,
+  }), [
+    isPlaying,
+    togglePlayPause,
+    currentInfo,
+    progress.position,
+    progress.duration,
+    seekTo,
+    isExpanded,
+  ]);
 
   return (
-    <AudioContext.Provider
-      value={{
-        isPlaying,
-        togglePlayPause,
-        currentAudio: currentInfo !== null,
-        currentInfo,
-        position: progress.position,
-        duration: progress.duration,
-        seekTo,
-        isExpanded,
-        setIsExpanded,
-      }}
-    >
+    <AudioContext.Provider value={contextValue}>
       {children}
     </AudioContext.Provider>
   );

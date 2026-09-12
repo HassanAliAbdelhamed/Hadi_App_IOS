@@ -145,7 +145,7 @@ const RadioQareCard = ({ cardinfo, facIconState, horizontal, index = 0 }) => {
     return (
       <TouchableOpacity
         style={Styles.verticalCard}
-        onPress={() => navigate.navigate("qarePage", { id: cardinfo.id - 1 })}
+        onPress={() => navigate.navigate("qarePage", { id: cardinfo.id })}
       >
         <View style={Styles.verticalImageRing}>
           <Image source={{ uri: cardinfo.img }} style={Styles.verticalImage} />
@@ -173,7 +173,7 @@ const RadioQareCard = ({ cardinfo, facIconState, horizontal, index = 0 }) => {
     <View style={Styles.bodyStyle}>
       <TouchableOpacity
         style={[Styles.card, { backgroundColor: cardColor }]}
-        onPress={() => navigate.navigate("qarePage", { id: cardinfo.id - 1 })}
+        onPress={() => navigate.navigate("qarePage", { id: cardinfo.id })}
       >
         {/* خطوط الأنتينا الزخرفية أعلى الكارت */}
         <View style={Styles.antennaWrap} pointerEvents="none">

@@ -9,45 +9,208 @@ const extractArray = (data) => {
   return [];
 };
 
+const pickArray = (data, keys = []) => {
+  for (const key of keys) {
+    const value = data?.[key];
+
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.$values)) return value.$values;
+  }
+
+  return [];
+};
+
+const getFirstDefinedValue = (...values) =>
+  values.find(
+    (value) =>
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+  );
+
 const normalizeQare = (item, index) => {
-  const rawId = item.id ?? item.Id;
   return {
-    id: rawId ? `${rawId}` : `qare-${index}`,
-    title: item.name ?? item.title ?? item.Title ?? item.Name,
-    img: item.imageUrl ?? item.img ?? item.Img ?? item.ImageUrl,
-    audioUrl: item.audioUrl ?? item.AudioUrl,
-    nationalityId: item.nationalityId ?? item.NationalityId,
-    nationality: item.nationality ?? item.Nationality,
-    description: item.description ?? item.Description,
+    id: item.id ?? item.Id ?? `${index}`,
+    title:
+      item.name ??
+      item.title ??
+      item.Title ??
+      item.Name ??
+      "",
+    img:
+      item.imageUrl ??
+      item.img ??
+      item.Img ??
+      item.ImageUrl ??
+      "",
+    audioUrl:
+      item.audioUrl ??
+      item.AudioUrl ??
+      "",
+    nationalityId:
+      item.nationalityId ??
+      item.NationalityId,
+    nationality:
+      item.nationality ??
+      item.Nationality ??
+      "",
+    description:
+      item.description ??
+      item.Description ??
+      "",
   };
 };
 
 const normalizeNationality = (item, index) => {
-  const rawId = item.id ?? item.Id;
   return {
-    id: rawId ? `${rawId}` : `nat-${index}`,
+    id:
+      item.id ??
+      item.Id ??
+      `nat-${index}`,
     title:
       item.title ??
       item.Title ??
       item.name ??
-      item.Name,
+      item.Name ??
+      "",
   };
 };
 
-const normalizeSuar = (item) => {
-  // console.log("Normalizing suar item:", item);
+const normalizeSuar = (item, index) => {
   return {
-    id: item.id ?? item.Id,
-    title: item.title ?? item.Title,
-    type: item.SwaraType ?? item.swaraType,
-    audioUrl: item.audioUrl ?? item.AudioUrl,
+    id:
+      item.id ??
+      item.Id ??
+      item.surahId ??
+      item.SurahId ??
+      index + 1,
+
+    title:
+      item.suaraTitle ??
+      item.surahTitle ??
+      item.title ??
+      item.Title ??
+      item.name ??
+      item.Name ??
+      `سورة ${index + 1}`,
+
+    type:
+      item.swaraType ??
+      item.SwaraType ??
+      item.swarType ??
+      item.SwarType ??
+      item.type ??
+      item.Type ??
+      "",
+
+    audioUrl:
+      item.audioUrl ??
+      item.AudioUrl ??
+      item.link ??
+      item.Link ??
+      item.url ??
+      item.Url ??
+      "",
   };
 };
+
+const normalizeRwayah = (item) => {
+  const suar = pickArray(item, [
+    "suar",
+    "Suar",
+  ]);
+
+  return {
+    name:
+      item.rewayaTitle ??
+      item.RewayaTitle ??
+      "غير محدد",
+
+    suar: suar.map(normalizeSuar),
+  };
+};
+
+const normalizeQareDetails = (data, qareId) => {
+  console.log("Qare details response:", data);
+
+  const rootData =
+    data?.qare ??
+    data?.qari ??
+    data?.data ??
+    data?.result ??
+    data ??
+    {};
+
+  const rwayatList = pickArray(rootData, [
+    "rewayat",
+    "Rewayat",
+  ]);
+
+  return {
+    id: qareId,
+
+    title:
+      getFirstDefinedValue(
+        rootData.qareName,
+        rootData.QareName,
+        "قارئ غير معروف"
+      ),
+
+    nationality:
+      getFirstDefinedValue(
+        rootData.nationality,
+        rootData.Nationality,
+        ""
+      ),
+
+    img:
+      getFirstDefinedValue(
+        rootData.imageUrl,
+        rootData.ImageUrl,
+        rootData.img,
+        rootData.Img,
+        rootData.image,
+        rootData.Image,
+        ""
+      ),
+
+    Audiosource:
+      getFirstDefinedValue(
+        rootData.audioSource,
+        rootData.AudioSource,
+        rootData.audiosource,
+        rootData.audioUrl,
+        rootData.AudioUrl,
+        ""
+      ),
+
+    description:
+      getFirstDefinedValue(
+        rootData.description,
+        rootData.Description,
+        ""
+      ),
+
+    Rwayat: rwayatList.map(normalizeRwayah),
+
+    swar: rwayatList.flatMap((rewayah) => {
+      const suar = pickArray(rewayah, [
+        "suar",
+        "Suar",
+      ]);
+
+      return suar.map(normalizeSuar);
+    }),
+  };
+};
+
 
 // Get All Quraa
 export const getAllQuraa = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/Quraa/All`);
+    const response = await fetch(
+      `${BASE_URL}/Quraa/All`
+    );
 
     if (!response.ok) {
       throw new Error("فشل تحميل القراء");
@@ -57,15 +220,22 @@ export const getAllQuraa = async () => {
 
     return extractArray(data).map(normalizeQare);
   } catch (error) {
-    console.log("Error fetching all quraa:", error.message);
+    console.log(
+      "Error fetching all quraa:",
+      error.message
+    );
+
     throw error;
   }
 };
 
+
 // Get All Quraa that read all suar
 export const getQuraaReadAllSuar = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/Quraa/ReadAllSurahs`);
+    const response = await fetch(
+      `${BASE_URL}/Quraa/ReadAllSurahs`
+    );
 
     if (!response.ok) {
       throw new Error("فشل تحميل القراء");
@@ -75,20 +245,26 @@ export const getQuraaReadAllSuar = async () => {
 
     return extractArray(data).map(normalizeQare);
   } catch (error) {
-    console.log("Error fetching all quraa:", error.message);
+    console.log(
+      "Error fetching quraa:",
+      error.message
+    );
+
     throw error;
   }
 };
 
 // Get Quraa By Nationality
-export const getQuraaByNationality = async (nationalityId) => {
+export const getMostListenedQuraa = async () => {
   try {
     const response = await fetch(
-      `${BASE_URL}/Quraa/Nationality/${nationalityId}`
+      `${BASE_URL}/Quraa/MostListened`
     );
 
     if (!response.ok) {
-      throw new Error("فشل تحميل القراء حسب الجنسية");
+      throw new Error(
+        "فشل تحميل القراء الاكثر استماعا"
+      );
     }
 
     const data = await response.json();
@@ -104,10 +280,41 @@ export const getQuraaByNationality = async (nationalityId) => {
   }
 };
 
+// Get Quraa By Nationality
+export const getQuraaByNationality = async (
+  nationalityId
+) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/Quraa/Nationality/${nationalityId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "فشل تحميل القراء حسب الجنسية"
+      );
+    }
+
+    const data = await response.json();
+
+    return extractArray(data).map(normalizeQare);
+  } catch (error) {
+    console.log(
+      "Error fetching quraa by nationality:",
+      error.message
+    );
+
+    throw error;
+  }
+};
+
+
 // Get All Nationalities
 export const getAllNationalities = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/Nationality/All`);
+    const response = await fetch(
+      `${BASE_URL}/Nationality/All`
+    );
 
     if (!response.ok) {
       throw new Error("فشل تحميل الجنسيات");
@@ -115,7 +322,9 @@ export const getAllNationalities = async () => {
 
     const data = await response.json();
 
-    return extractArray(data).map(normalizeNationality);
+    return extractArray(data).map(
+      normalizeNationality
+    );
   } catch (error) {
     console.log(
       "Error fetching nationalities:",
@@ -126,6 +335,7 @@ export const getAllNationalities = async () => {
   }
 };
 
+
 // Today Recitation
 export const getTodayRecitation = async () => {
   try {
@@ -134,7 +344,9 @@ export const getTodayRecitation = async () => {
     );
 
     if (!response.ok) {
-      throw new Error("فشل تحميل تلاوة اليوم");
+      throw new Error(
+        "فشل تحميل تلاوة اليوم"
+      );
     }
 
     const data = await response.json();
@@ -157,16 +369,20 @@ export const getTodayRecitation = async () => {
   }
 };
 
+
 // All suar
 export const getAllsuar = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/Swar/AllSuar`);
+    const response = await fetch(
+      `${BASE_URL}/Swar/AllSuar`
+    );
 
     if (!response.ok) {
       throw new Error("فشل تحميل السور");
     }
 
     const data = await response.json();
+
     return extractArray(data).map(normalizeSuar);
   } catch (error) {
     console.log(
@@ -178,17 +394,24 @@ export const getAllsuar = async () => {
   }
 };
 
-export const getRandomSuarOfQare = async (qareId) => {
+
+// Random suar of qare
+export const getRandomSuarOfQare = async (
+  qareId
+) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/Swar/Random/1`
+      `${BASE_URL}/Swar/Random/${qareId}`
     );
 
     if (!response.ok) {
-      throw new Error("فشل تحميل السور العشوائية للقارئ");
+      throw new Error(
+        "فشل تحميل السور العشوائية للقارئ"
+      );
     }
 
     const data = await response.json();
+
     return data;
   } catch (error) {
     console.log(
@@ -200,28 +423,76 @@ export const getRandomSuarOfQare = async (qareId) => {
   }
 };
 
+
+// Random Quraa
 export const GetRandomQuraa = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/Quraa/RandomQuraa`);
+    const response = await fetch(
+      `${BASE_URL}/Quraa/RandomQuraa`
+    );
 
     if (!response.ok) {
-      throw new Error("فشل تحميل قارئ عشوائي");
+      throw new Error(
+        "فشل تحميل قارئ عشوائي"
+      );
     }
 
     const data = await response.json();
 
     const list = extractArray(data);
+
     if (list.length > 0) {
       return list.map(normalizeQare);
     }
 
-    if (data && (data.id ?? data.Id) !== undefined) {
-      return [normalizeQare(data, 0)];
+    if (
+      data &&
+      (data.id ?? data.Id) !== undefined
+    ) {
+      return [
+        normalizeQare(data, 0)
+      ];
     }
 
     return [];
   } catch (error) {
-    console.log("Error fetching random quraa:", error.message);
+    console.log(
+      "Error fetching random quraa:",
+      error.message
+    );
+
+    throw error;
+  }
+};
+
+
+// Get qare profile + rewayat + suar
+export const getSwarByQare = async (
+  qareId
+) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/Swar/${qareId}`
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "فشل تحميل بيانات القارئ"
+      );
+    }
+
+    const data = await response.json();
+
+    return normalizeQareDetails(
+      data,
+      qareId
+    );
+  } catch (error) {
+    console.log(
+      "Error fetching qare details:",
+      error.message
+    );
+
     throw error;
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   FlatList,
   Image,
@@ -18,12 +18,12 @@ import Header from "../Components/Header";
 export default function RadioScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
-  const refreshHandler = () => {
+  const refreshHandler = useCallback(() => {
     setRefreshing(true);
     setRefreshing(false);
-  };
+  }, []);
 
-  const handlePlay = (item) => {
+  const handlePlay = useCallback((item) => {
     playTrack({
       swaraId: item.id,
       audioSrc: item.Audiosource,
@@ -31,9 +31,9 @@ export default function RadioScreen() {
       SwaraTitle: item.title,
       QareTitle: "مباشر",
     });
-  };
+  }, []);
 
-  const renderCard = ({ item }) => (
+  const renderCard = useCallback(({ item }) => (
     <TouchableOpacity
       style={Styles.card}
       activeOpacity={0.7}
@@ -48,7 +48,7 @@ export default function RadioScreen() {
       </View>
       <MaterialIcons name="radio" size={24} color={AllColors.greenColor} style={Styles.icon} />
     </TouchableOpacity>
-  );
+  ), [handlePlay]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: AllColors.BlackBackgroundColor }}>

@@ -143,8 +143,8 @@ export default function MiniPlayer() {
           <TouchableOpacity
             style={styles.PressableImage}
             onPress={() => {
-              qaree != "مباشر" &&
-                navigate.navigate("qarePage", { id: qareID - 1 });
+              qaree !== "مباشر" &&
+                navigate.navigate("qarePage", { id: qareID });
             }}
           >
             <Image source={{ uri: image }} style={styles.cover} />
@@ -171,7 +171,7 @@ export default function MiniPlayer() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 75,
+    bottom: 65,
     width,
     backgroundColor: "#1c1c1c",
     borderTopColor: "#333",

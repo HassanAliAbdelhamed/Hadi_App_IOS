@@ -56,11 +56,19 @@ export default function HomeScreen() {
     return query ? quraa.filter((qare) => qare.title?.toLowerCase().includes(query)) : quraa;
   }, [quraa, searchQuery]);
 
-  const refreshHandler = async () => {
+  const refreshHandler = useCallback(async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  };
+  }, [loadData]);
+
+  const renderQari = useCallback(({ item }) => (
+    <QaraCard cardinfo={item} facIconState={true} />
+  ), []);
+
+  const keyExtractor = useCallback((item, index) => (
+    item.id?.toString() || index.toString()
+  ), []);
 
   const selectedNationalityName = nationalities.find((item) => item.id === selectedNationality)?.title;
 
@@ -116,8 +124,8 @@ export default function HomeScreen() {
         ) : (
           <FlatList
             data={filteredQuraa}
-            renderItem={({ item }) => <QaraCard cardinfo={item} facIconState={true} />}
-            keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+            renderItem={renderQari}
+            keyExtractor={keyExtractor}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshHandler} tintColor={AllColors.greenColor} />}
             contentContainerStyle={Styles.listContainer}
             initialNumToRender={10}
@@ -132,7 +140,6 @@ export default function HomeScreen() {
             }
             ListEmptyComponent={
               <View style={Styles.emptyContainer}>
-                <Text style={Styles.emptyIcon}>🔍</Text>
                 <Text style={Styles.emptyTitle}>لا يوجد نتائج</Text>
                 <Text style={Styles.emptyText}>لم نجد قارئًا يطابق بحثك</Text>
               </View>

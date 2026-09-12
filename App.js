@@ -102,7 +102,7 @@ function TabBar() {
         }}
       />
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="المفضلة"
         component={FavoriteScreen}
         options={{
@@ -114,7 +114,7 @@ function TabBar() {
               <FontAwesome name="heart-o" size={26} color={color} />
             ),
         }}
-      />
+      /> */}
     </Tabs.Navigator>
   );
 }

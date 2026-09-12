@@ -11,7 +11,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import AllColors from "../assets/Colors";
 import QaraCard from "../Components/qareCard";
-import { getAllQuraa, getQuraaByNationality } from "../assets/Apis/quraaApi";
+import { getMostListenedQuraa, getQuraaByNationality } from "../assets/Apis/quraaApi";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QuraaMostListened from "../Components/QuraaMostListened";
 import Header from "../Components/Header";
@@ -25,10 +25,9 @@ const NATIONALITY_PALESTINE_ID = 16;
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false); // حالة متابعة الخطأ
+  const [error, setError] = useState(false); 
 
-  const [allQuraa, setAllQuraa] = useState([]);
-  const [filteredQuraa, setFilteredQuraa] = useState([]);
+  const [mostListenedQuraa, setmostListenedQuraa] = useState([]);
   const [egyptianQuraa, setEgyptianQuraa] = useState([]);
   const [saudiQuraa, setSaudiQuraa] = useState([]);
   const [sudaneseQuraa, setSudaneseQuraa] = useState([]);
@@ -36,27 +35,26 @@ export default function HomeScreen() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    setError(false); // إعادة ضبط حالة الخطأ عند البدء
+    setError(false); 
 
     try {
-      // جلب كل البيانات بطلب واحد متوازي
-      const [all, egyptians, saudis, sudanese, palestinians] = await Promise.all([
-        getAllQuraa(),
+      const [mostListenedQuraa,egyptians, saudis, sudanese, palestinians] = await Promise.all([
+
+        getMostListenedQuraa(),
         getQuraaByNationality(NATIONALITY_EGYPT_ID),
         getQuraaByNationality(NATIONALITY_SAUDI_ID),
         getQuraaByNationality(NATIONALITY_SUDAN_ID),
         getQuraaByNationality(NATIONALITY_PALESTINE_ID),
       ]);
 
-      setAllQuraa(all);
-      setFilteredQuraa(all);
+      setmostListenedQuraa(mostListenedQuraa);
       setEgyptianQuraa(egyptians);
       setSaudiQuraa(saudis);
       setSudaneseQuraa(sudanese);
       setPalestinianQuraa(palestinians);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError(true); // تفعيل حالة الخطأ في حالة انقطاع النت أو فشل الطلب
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -66,11 +64,19 @@ export default function HomeScreen() {
     loadData();
   }, [loadData]);
 
-  const refreshHandler = async () => {
+  const refreshHandler = useCallback(async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  };
+  }, [loadData]);
+
+  const renderEgyptianQari = useCallback(({ item }) => (
+    <QuraaMostListened cardinfo={item} horizontal />
+  ), []);
+
+  const renderQari = useCallback(({ item }) => (
+    <QaraCard cardinfo={item} horizontal facIconState={false} />
+  ), []);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: AllColors.BlackBackgroundColor }}>
@@ -82,14 +88,12 @@ export default function HomeScreen() {
       >
         <Header />
 
-        {/* 1. حالة التحميل */}
         {loading ? (
           <View style={Styles.centerContainer}>
             <ActivityIndicator size="large" color={AllColors.greenColor} />
             <Text style={Styles.statusText}>جاري التحميل...</Text>
           </View>
         ) : error ? (
-          /* 2. حالة وجود خطأ أو انقطاع الإنترنت */
           <View style={Styles.centerContainer}>
             <Text style={Styles.errorText}>
               حدث خطأ في الاتصال، يرجى التأكد من شبكة الإنترنت ومحاولة مرة أخرى.
@@ -99,15 +103,32 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          /* 3. عرض المحتوى بعد نجاح جلب البيانات */
           <>
             <TodayRecitationCard/>
-            {/* قراء مصريين */}
+            {mostListenedQuraa.length > 0 && (
+              <View style={Styles.sectionContainer}>
+                <View style={Styles.sectionHeaderRow}>
+                  <TouchableOpacity>
+                    {/* <Text style={Styles.showAllText}>عرض الكل</Text> */}
+                  </TouchableOpacity>
+                  <Text style={Styles.sectionTitle}>القرآء الأكثر استماع</Text>
+                </View>
+                <FlatList
+                  data={mostListenedQuraa}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item, index) => `${item.id ?? index}`}
+                  renderItem={renderEgyptianQari}
+                  contentContainerStyle={{ paddingHorizontal: 8 }}
+                />
+              </View>
+            )}
+
             {egyptianQuraa.length > 0 && (
               <View style={Styles.sectionContainer}>
                 <View style={Styles.sectionHeaderRow}>
                   <TouchableOpacity>
-                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                    {/* <Text style={Styles.showAllText}>عرض الكل</Text> */}
                   </TouchableOpacity>
                   <Text style={Styles.sectionTitle}>قراء مصريين</Text>
                 </View>
@@ -115,21 +136,18 @@ export default function HomeScreen() {
                   data={egyptianQuraa}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  keyExtractor={(item) => `egypt-${item.id}`}
-                  renderItem={({ item }) => (
-                    <QuraaMostListened cardinfo={item} horizontal facIconState={false} />
-                  )}
+                  keyExtractor={(item, index) => `${item.id ?? index}`}
+                  renderItem={renderQari}
                   contentContainerStyle={{ paddingHorizontal: 8 }}
                 />
               </View>
             )}
 
-            {/* قراء سعوديين */}
             {saudiQuraa.length > 0 && (
               <View style={Styles.sectionContainer}>
                 <View style={Styles.sectionHeaderRow}>
                   <TouchableOpacity>
-                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                    {/* <Text style={Styles.showAllText}>عرض الكل</Text> */}
                   </TouchableOpacity>
                   <Text style={Styles.sectionTitle}>قراء سعوديين</Text>
                 </View>
@@ -138,9 +156,7 @@ export default function HomeScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => `saudi-${item.id}`}
-                  renderItem={({ item }) => (
-                    <QaraCard cardinfo={item} horizontal facIconState={false} />
-                  )}
+                  renderItem={renderQari}
                   contentContainerStyle={{ paddingHorizontal: 8 }}
                 />
               </View>
@@ -151,7 +167,7 @@ export default function HomeScreen() {
               <View style={Styles.sectionContainer}>
                 <View style={Styles.sectionHeaderRow}>
                   <TouchableOpacity>
-                    <Text style={Styles.showAllText}>عرض الكل</Text>
+                    {/* <Text style={Styles.showAllText}>عرض الكل</Text> */}
                   </TouchableOpacity>
                   <Text style={Styles.sectionTitle}>قراء سودانيين</Text>
                 </View>
@@ -160,15 +176,13 @@ export default function HomeScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => `sudan-${item.id}`}
-                  renderItem={({ item }) => (
-                    <QaraCard cardinfo={item} horizontal facIconState={false} />
-                  )}
+                  renderItem={renderQari}
                   contentContainerStyle={{ paddingHorizontal: 8 }}
                 />
               </View>
             )}
 
-            {/* قراء فلسطينيين */}
+            {/* قراء فلسطينيين
             {palestinianQuraa.length > 0 && (
               <View style={Styles.sectionContainer}>
                 <View style={Styles.sectionHeaderRow}>
@@ -182,13 +196,11 @@ export default function HomeScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => `palestine-${item.id}`}
-                  renderItem={({ item }) => (
-                    <QaraCard cardinfo={item} horizontal facIconState={false} />
-                  )}
+                  renderItem={renderQari}
                   contentContainerStyle={{ paddingHorizontal: 8 }}
                 />
               </View>
-            )}
+            )} */}
           </>
         )}
       </ScrollView>
