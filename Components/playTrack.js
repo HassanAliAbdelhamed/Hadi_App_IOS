@@ -5,12 +5,21 @@ let isPlayerSetup = false;
 export default async function playTrack({
   swaraId,
   qareId,
+  rwayahId,
+  rwayahName,
+  surahNumber,
+  audioBaseUrl,
   audioSrc,
   image,
   SwaraTitle,
   QareTitle,
 }) {
   try {
+    if (!audioSrc || swaraId == null) {
+      console.warn("Cannot play track without an audio URL and surah ID");
+      return;
+    }
+
     if (!isPlayerSetup) {
       try {
         await TrackPlayer.updateOptions({
@@ -22,6 +31,9 @@ export default async function playTrack({
           ],
           compactCapabilities: [Capability.Play, Capability.Pause],
           alwaysPauseOnInterruption: true,
+          android: {
+            appKilledPlaybackBehavior: "stop-playback",
+          },
         });
         isPlayerSetup = true;
       } catch (e) {
@@ -34,6 +46,10 @@ export default async function playTrack({
       {
         id: swaraId,
         qId: qareId,
+        rwayahId,
+        rwayahName,
+        surahNumber: surahNumber ?? swaraId,
+        audioBaseUrl,
         url: audioSrc,
         title: SwaraTitle,
         artist: QareTitle,

@@ -1,4 +1,4 @@
-const BASE_URL = "http://ayaaplus.runasp.net/api";
+const BASE_URL = "https://ayaaplus.runasp.net/api";
 
 const extractArray = (data) => {
   if (Array.isArray(data)) return data;
@@ -85,6 +85,19 @@ const normalizeSuar = (item, index) => {
       item.SurahId ??
       index + 1,
 
+    surahNumber:
+      item.surahNumber ??
+      item.SurahNumber ??
+      item.number ??
+      item.Number ??
+      item.surahNo ??
+      item.SurahNo ??
+      item.surahId ??
+      item.SurahId ??
+      item.id ??
+      item.Id ??
+      index + 1,
+
     title:
       item.suaraTitle ??
       item.surahTitle ??
@@ -121,10 +134,22 @@ const normalizeRwayah = (item) => {
   ]);
 
   return {
+    id:
+      item.id ??
+      item.Id ??
+      item.rewayahId ??
+      item.RewayahId,
     name:
       item.rewayaTitle ??
       item.RewayaTitle ??
       "غير محدد",
+
+    link:
+      item.link ??
+      item.Link ??
+      item.audioSource ??
+      item.AudioSource ??
+      "",
 
     suar: suar.map(normalizeSuar),
   };

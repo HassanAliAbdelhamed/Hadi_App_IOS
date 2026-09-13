@@ -7,6 +7,7 @@ import QaraCard from "../Components/qareCard";
 import Header from "../Components/Header";
 import NationalityFilter from "../Components/NationalityFilter";
 import { MaterialIcons } from "@expo/vector-icons";
+import OfflineState from "../Components/OfflineState";
 
 export default function HomeScreen() {
   const [quraa, setQuraa] = useState([]);
@@ -115,12 +116,7 @@ export default function HomeScreen() {
             <Text style={Styles.statusText}>جاري تحميل القراء...</Text>
           </View>
         ) : error ? (
-          <View style={Styles.centerContainer}>
-            <Text style={Styles.errorText}>حدث خطأ في الاتصال، يرجى التأكد من شبكة الإنترنت ومحاولة مرة أخرى.</Text>
-            <TouchableOpacity style={Styles.retryButton} onPress={loadData}>
-              <Text style={Styles.retryButtonText}>إعادة المحاولة</Text>
-            </TouchableOpacity>
-          </View>
+          <OfflineState onRetry={loadData} message="تعذر الاتصال بالإنترنت" />
         ) : (
           <FlatList
             data={filteredQuraa}

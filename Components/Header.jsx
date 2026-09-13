@@ -2,15 +2,18 @@ import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // مكتبة أيقونات إكسبو
 import AllColors from "../assets/Colors";
 import Logo from "../assets/images/Logo.png";
+import { useNavigation } from "@react-navigation/native";
 
 function Header() {
+  const navigation = useNavigation();
+
   return (
     <View style={Styles.Header}>
       <View style={Styles.HeaderRow}>
         <Image source={Logo} style={Styles.Logo} />        
         <TouchableOpacity 
           style={Styles.SettingsButton} 
-          onPress={() => {}}
+          onPress={() => navigation.navigate("Settings")}
         >
           <Ionicons name="settings-outline" size={24} color="white" />
         </TouchableOpacity>

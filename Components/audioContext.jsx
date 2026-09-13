@@ -7,6 +7,7 @@ import TrackPlayer, {
   Event,
   useTrackPlayerEvents,
 } from "react-native-track-player";
+import { getSwarByQare } from "../assets/Apis/quraaApi";
 
 const AudioContext = createContext();
 
@@ -18,6 +19,20 @@ export const AudioProvider = ({ children }) => {
   const progress = useProgress();
   const setupAttempted = useRef(false);
   const playerSetupTimeout = useRef(null);
+  const nextTrackInProgress = useRef(false);
+
+  const updateCurrentInfo = useCallback((track) => {
+    if (!track) return;
+
+    setCurrentInfo({
+      id: track.id,
+      qareID: track.qId,
+      rwayahID: track.rwayahId,
+      title: track.title,
+      image: track.artwork,
+      qaree: track.artist,
+    });
+  }, []);
 
   // Initialize TrackPlayer
   useEffect(() => {
@@ -33,6 +48,7 @@ export const AudioProvider = ({ children }) => {
         try {
           await TrackPlayer.getActiveTrack();
           console.log("TrackPlayer already initialized");
+          await TrackPlayer.reset();
           setPlayerReady(true);
           return;
           } catch (_e) {
@@ -43,6 +59,9 @@ export const AudioProvider = ({ children }) => {
         await TrackPlayer.setupPlayer({ waitForBuffer: true }).catch(err => {
           console.log("Setup error (continuing anyway):", err.message);
         });
+
+        // Playback is session-only; downloaded files and favorites are separate storage.
+        await TrackPlayer.reset();
 
         console.log("TrackPlayer initialized");
         setPlayerReady(true);
@@ -77,20 +96,81 @@ export const AudioProvider = ({ children }) => {
         const track = await TrackPlayer.getTrack(event.index);
 
         if (track) {
-          setCurrentInfo({
-            id: track.id,
-            qareID: track.qId,
-            title: track.title,
-            image: track.artwork,
-            qaree: track.artist,
-          });
+          updateCurrentInfo(track);
         }
       } catch (e) {
         console.warn("Error fetching track:", e.message);
       }
     }
-  }
-);
+  }, [updateCurrentInfo]);
+
+  useTrackPlayerEvents(
+    [Event.PlaybackQueueEnded],
+    async (event) => {
+      if (nextTrackInProgress.current) return;
+      nextTrackInProgress.current = true;
+
+      try {
+        const activeTrack = await TrackPlayer.getActiveTrack()
+          || (event.track != null ? await TrackPlayer.getTrack(event.track) : null);
+        const qareId = activeTrack?.qId;
+        const currentNumber = Number(activeTrack?.surahNumber);
+
+        if (qareId == null || !Number.isInteger(currentNumber)) return;
+
+        const qare = await getSwarByQare(qareId);
+        const rewayah = qare?.Rwayat?.find((item) => (
+          activeTrack.rwayahId != null && String(item.id) === String(activeTrack.rwayahId)
+        )) || qare?.Rwayat?.find((item) => (
+          activeTrack.rwayahName && item.name === activeTrack.rwayahName
+        )) || qare?.Rwayat?.[0];
+
+        const orderedSuar = [...(rewayah?.suar || [])]
+          .filter((item) => Number.isInteger(Number(item.surahNumber)))
+          .sort((left, right) => Number(left.surahNumber) - Number(right.surahNumber));
+
+        if (orderedSuar.length === 0) return;
+
+        const nextNumbers = Array.from({ length: 114 }, (_, index) => (
+          ((currentNumber + index) % 114) + 1
+        ));
+        const nextSurah = nextNumbers
+          .map((number) => orderedSuar.find((item) => Number(item.surahNumber) === number))
+          .find((item) => item && (item.audioUrl || rewayah.link || qare?.Audiosource));
+
+        if (!nextSurah) return;
+
+        const rawAudioUrl = nextSurah.audioUrl || "";
+        const baseUrl = rewayah.link || qare?.Audiosource || "";
+        const audioUrl = rawAudioUrl.startsWith("http")
+          ? rawAudioUrl
+          : baseUrl
+            ? `${baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`}${rawAudioUrl || String(nextSurah.surahNumber).padStart(3, "0") + ".mp3"}`
+            : "";
+
+        if (!audioUrl) return;
+
+        await TrackPlayer.reset();
+        await TrackPlayer.add([{
+          id: nextSurah.id,
+          qId: qare.id,
+          rwayahId: rewayah.id,
+          rwayahName: rewayah.name,
+          surahNumber: nextSurah.surahNumber,
+          audioBaseUrl: baseUrl,
+          url: audioUrl,
+          title: nextSurah.title,
+          artist: qare.title,
+          artwork: qare.img,
+        }]);
+        await TrackPlayer.play();
+      } catch (error) {
+        console.warn("Error starting next Surah:", error.message);
+      } finally {
+        nextTrackInProgress.current = false;
+      }
+    }
+  );
 
   // Fetch current track info when player is ready
   useEffect(() => {
@@ -101,13 +181,7 @@ export const AudioProvider = ({ children }) => {
         // RNTP v5: use getActiveTrack() instead of deprecated getCurrentTrack()
         const track = await TrackPlayer.getActiveTrack();
         if (track) {
-          setCurrentInfo({
-            id: track.id,
-            qareID: track.qId,
-            title: track.title,
-            image: track.artwork,
-            qaree: track.artist,
-          });
+          updateCurrentInfo(track);
         }
       } catch (e) {
         console.warn("Error fetching current track:", e.message);
@@ -115,7 +189,7 @@ export const AudioProvider = ({ children }) => {
     };
 
     fetchTrack();
-  }, [playerReady]);
+  }, [playerReady, updateCurrentInfo]);
 
   const togglePlayPause = useCallback(async () => {
     try {

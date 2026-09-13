@@ -79,7 +79,9 @@ const QariSpinnerScreen = () => {
       ? baseUrl
       : `${baseUrl}/`;
 
-    const fullAudioSrc = `${surah?.audioUrl}`;
+    const fullAudioSrc = surah?.audioUrl?.startsWith("http")
+      ? surah.audioUrl
+      : `${cleanBaseUrl}${surah?.audioUrl || ""}`;
 
     console.log('Playing Track:', {
       swaraId: surah?.id,
@@ -87,10 +89,14 @@ const QariSpinnerScreen = () => {
     });
     playTrack({
       swaraId: surah?.id,
+      qareId: qari?.id,
+      rwayahName: surah?.rwayahName,
+      surahNumber: surah?.surahNumber ?? surah?.id,
+      audioBaseUrl: cleanBaseUrl,
       audioSrc: fullAudioSrc,
       image: getImageUrl(qari),
       SwaraTitle: surah?.title,
-      QareTitle: qari?.title,
+      QareTitle: qari?.title || qari?.name,
     });
   }, []);
 

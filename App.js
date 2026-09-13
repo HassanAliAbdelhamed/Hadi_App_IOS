@@ -22,6 +22,9 @@ import RandomPickerScreen from './Screens/RandomPickerScreen';
 import FortuneWheelIcon from './Components/NavbarIcons/FortuneWheelIcon';
 import AllColors from './assets/Colors';
 import QariSpinnerScreen from './Screens/QareSpinnerScreen';
+import SettingsScreen from './Screens/SettingsScreen';
+import PrivacyPolicyScreen from './Screens/PrivacyPolicyScreen';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 try {
   SplashScreen.preventAutoHideAsync().catch(() => {
@@ -35,6 +38,8 @@ const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
 function TabBar() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs.Navigator
       initialRouteName="الرئسية"
@@ -45,8 +50,8 @@ function TabBar() {
           borderColor: 'transparent',
           borderWidth: 1,
           backgroundColor: '#0d0d0d',
-          height: 65,
-          paddingBottom: 8,
+          height: 65 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
         },
       }}
     >
@@ -167,35 +172,49 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="#1b1f23"
-          translucent={false}
-        />
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <SafeAreaView style={styles.container}>
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor="#1b1f23"
+            translucent={false}
+          />
 
-        <AudioProvider>
-          <NavigationContainer>
-            <Stack.Navigator>
-              <Stack.Screen
-                name="TabBar"
-                component={TabBar}
-                options={{ headerShown: false }}
-              />
+          <AudioProvider>
+            <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="TabBar"
+                  component={TabBar}
+                  options={{ headerShown: false }}
+                />
 
-              <Stack.Screen
-                name="qarePage"
-                component={QarePage}
-                options={{ headerShown: false }}
-              />
-            </Stack.Navigator>
+                <Stack.Screen
+                  name="qarePage"
+                  component={QarePage}
+                  options={{ headerShown: false }}
+                />
 
-            <MiniPlayer />
-          </NavigationContainer>
-        </AudioProvider>
-      </SafeAreaView>
-    </ErrorBoundary>
+                <Stack.Screen
+                  name="Settings"
+                  component={SettingsScreen}
+                  options={{ headerShown: false }}
+                />
+
+                <Stack.Screen
+                  name="PrivacyPolicy"
+                  component={PrivacyPolicyScreen}
+                  options={{ headerShown: false }}
+                />
+              </Stack.Navigator>
+
+              <MiniPlayer />
+            </NavigationContainer>
+          </AudioProvider>
+        </SafeAreaView>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
 

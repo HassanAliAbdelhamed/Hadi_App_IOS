@@ -119,7 +119,18 @@ import playTrack from "./playTrack";
           let SwaraTitle = cardInfo.title;
           let QareTitle = QareCard.title;
           let qareId = QareCard.id;          
-          playTrack({swaraId,qareId,audioSrc,image,SwaraTitle,QareTitle})
+          playTrack({
+            swaraId,
+            qareId,
+            rwayahId: currentRwayah?.id,
+            rwayahName: currentRwayah?.name,
+            surahNumber: cardInfo.surahNumber ?? cardInfo.id,
+            audioBaseUrl: currentRwayah?.link || QareCard.Audiosource,
+            audioSrc,
+            image,
+            SwaraTitle,
+            QareTitle,
+          })
         }}
       >
         <View style={styles.linkContainer}>

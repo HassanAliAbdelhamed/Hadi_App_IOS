@@ -7,21 +7,22 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import AllColors from "../assets/Colors";
 import { getTodayRecitation } from "../assets/Apis/quraaApi";
+import playTrack from "./playTrack";
 
 const TodayRecitationCard = ({ data: initialData }) => {
   const [recitation, setRecitation] = useState(initialData || null);
   const [loading, setLoading] = useState(!initialData);
-  const navigation = useNavigation();
-
   useEffect(() => {
     if (!initialData) {
       const fetchData = async () => {
-        const res = await getTodayRecitation();
-        setRecitation(res);
-        setLoading(false);
+        try {
+          const res = await getTodayRecitation();
+          setRecitation(res);
+        } finally {
+          setLoading(false);
+        }
       };
       fetchData();
     }
@@ -41,13 +42,17 @@ const TodayRecitationCard = ({ data: initialData }) => {
     <TouchableOpacity
       activeOpacity={0.9}
       style={styles.cardContainer}
-      onPress={() =>
-        navigation.navigate("qarePage", {
-          id: recitation.qareId,
-          surahId: recitation.surahId,
-          audioUrl: recitation.audioUrl,
-        })
-      }
+      onPress={() => {
+        playTrack({
+          swaraId: recitation.surahId,
+          qareId: recitation.qareId,
+          surahNumber: recitation.surahId,
+          audioSrc: recitation.audioUrl,
+          image: recitation.imageUrl,
+          SwaraTitle: recitation.surahName,
+          QareTitle: recitation.qareName,
+        });
+      }}
     >
       <ImageBackground
         source={{ uri: recitation.imageUrl }}

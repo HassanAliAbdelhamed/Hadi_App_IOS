@@ -12,12 +12,14 @@ import Slider from "@react-native-community/slider";
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useAudio } from "./audioContext";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
 export default function MiniPlayer() {
 
   const navigate = useNavigation();
+  const insets = useSafeAreaInsets();
   const audioContext = useAudio();
 
   // Safely destructure with defaults
@@ -68,7 +70,11 @@ export default function MiniPlayer() {
     <TouchableOpacity
       activeOpacity={1}
       onPress={!isExpanded ? toggleExpand : undefined}
-      style={[styles.container, isExpanded && styles.expandedContainer]}
+      style={[
+        styles.container,
+        !isExpanded && { bottom: 65 + insets.bottom },
+        isExpanded && styles.expandedContainer,
+      ]}
     >
       {isExpanded ? (
         <View style={styles.fullContainer} className="h-full">
@@ -144,7 +150,7 @@ export default function MiniPlayer() {
             style={styles.PressableImage}
             onPress={() => {
               qaree !== "مباشر" &&
-                navigate.navigate("qarePage", { id: qareID });
+                qareID != null && navigate.navigate("qarePage", { id: qareID });
             }}
           >
             <Image source={{ uri: image }} style={styles.cover} />
