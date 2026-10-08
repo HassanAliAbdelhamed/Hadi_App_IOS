@@ -1,50 +1,63 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { G, Path, Circle } from 'react-native-svg';
+import Svg, { G, Path } from 'react-native-svg';
 import AllColors from '../../assets/Colors';
 
 const FortuneWheelIcon = ({ focused }) => {
-const size = 40;
-const radius = size / 2;
+  const size = 40;
+  const radius = size / 2;
 
-const colors = focused
-  ? [
-      AllColors.greenColor,
-      AllColors.whiteColor,
-      AllColors.greenColor,
-      AllColors.whiteColor,
-      AllColors.greenColor,
-      AllColors.whiteColor,
-    ]
-  : [
-      AllColors.darkgreenColor,
-      AllColors.darkwhiteColor,
-      AllColors.darkgreenColor,
-      AllColors.darkwhiteColor,
-      AllColors.darkgreenColor,
-      AllColors.darkwhiteColor,
-    ];
+  const colors = focused
+    ? [
+        AllColors.greenColor,
+        AllColors.whiteColor,
+        AllColors.greenColor,
+        AllColors.whiteColor,
+        AllColors.greenColor,
+        AllColors.whiteColor,
+      ]
+    : [
+        AllColors.darkgreenColor,
+        AllColors.darkwhiteColor,
+        AllColors.darkgreenColor,
+        AllColors.darkwhiteColor,
+        AllColors.darkgreenColor,
+        AllColors.darkwhiteColor,
+      ];
 
-  // دالة لحساب مسار كل جزء (60 درجة)
+  // حساب مسار كل جزء - اتجاه RTL
   const createSegmentPath = (index) => {
-    const startAngle = (index * 60 * Math.PI) / 180;
-    const endAngle = ((index + 1) * 60 * Math.PI) / 180;
+    const startAngle = (-index * 60 * Math.PI) / 180;
+    const endAngle = (-(index + 1) * 60 * Math.PI) / 180;
 
     const x1 = radius + radius * Math.cos(startAngle);
     const y1 = radius + radius * Math.sin(startAngle);
+
     const x2 = radius + radius * Math.cos(endAngle);
     const y2 = radius + radius * Math.sin(endAngle);
 
-    return `M ${radius} ${radius} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
+    return `
+      M ${radius} ${radius}
+      L ${x1} ${y1}
+      A ${radius} ${radius} 0 0 0 ${x2} ${y2}
+      Z
+    `;
   };
 
   return (
     <View style={wheelStyles.wheelOuterCircle}>
-      
-      {/* العجلة المقسمة إلى 6 أجزاء متساوية */}
+
+      {/* العجلة - اتجاه عربي RTL */}
       <View style={wheelStyles.wheelContainer}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <G rotation="-90" origin={`${radius}, ${radius}`}>
+        <Svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+        >
+          <G
+            rotation="-90"
+            origin={`${radius}, ${radius}`}
+          >
             {colors.map((color, index) => (
               <Path
                 key={index}
@@ -82,6 +95,7 @@ const wheelStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   centerDot: {
     position: 'absolute',
     width: 7,

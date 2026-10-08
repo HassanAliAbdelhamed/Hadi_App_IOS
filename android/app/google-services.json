@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "855606465643",
+    "project_id": "palestines",
+    "storage_bucket": "palestines.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855606465643:android:5076f860237ed43e22cd2e",
+        "android_client_info": {
+          "package_name": "Hadi.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJ8lcLJZ6qc4mz5W7QlXAFPh0M6qI_0Ww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855606465643:android:269800e1a22e37f622cd2e",
+        "android_client_info": {
+          "package_name": "com.hassanali2.quranplus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJ8lcLJZ6qc4mz5W7QlXAFPh0M6qI_0Ww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,7 +2,7 @@
   "expo": {
     "name": "هَدْي",
     "slug": "quran-plus",
-    "version": "1.2.0",
+    "version": "1.2.2",
     "orientation": "portrait",
     "icon": "./assets/images/Logo.png",
     "scheme": "myapp",
@@ -17,6 +17,8 @@
     },
     "android": {
       "package": "com.hassanali2.quranplus",
+      "versionCode": 50,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Logo.png",
         "backgroundColor": "#141515"
@@ -30,13 +32,20 @@
       ]
     },
     "web": {
-      "bundler": "metro", 
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-font"
+    "expo-router",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/Logo.png",
+          "color": "#141515"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -46,7 +55,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "78b0fcf0-28cb-42ed-8fed-f34d1a50c90e"
+        "projectId": "0e38a453-e8d3-4419-af56-00a4ffcd122e"
       }
     }
   }

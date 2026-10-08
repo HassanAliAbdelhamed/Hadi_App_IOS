@@ -1,4 +1,3 @@
-// IMPORTANT: react-native-reanimated must be the very first import in App.js
 import 'react-native-reanimated';
 
 import React, { useEffect, useCallback, useState } from 'react';
@@ -7,24 +6,29 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from './Screens/HomePage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import QarePage from './Bracsh Screens/qarePage';
 import { useFonts } from 'expo-font';
 import RadioScreen from './Screens/radioScreen';
-import FavoriteScreen from './Screens/FavoriteScreen';
 import { AudioProvider } from './Components/audioContext';
 import MiniPlayer from './Components/MiniPlayer';
 import ErrorBoundary from './Components/ErrorBoundary';
-import { StatusBar, SafeAreaView, StyleSheet, View, Platform, I18nManager } from 'react-native';
+import { Linking, Platform, StatusBar, SafeAreaView, StyleSheet, View, I18nManager } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import QuraaScreen from './Screens/QuraaScreen';
-import RandomPickerScreen from './Screens/RandomPickerScreen';
 import FortuneWheelIcon from './Components/NavbarIcons/FortuneWheelIcon';
 import AllColors from './assets/Colors';
 import QariSpinnerScreen from './Screens/QareSpinnerScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 import PrivacyPolicyScreen from './Screens/PrivacyPolicyScreen';
+import NotificationSetupScreen from './Screens/NotificationSetupScreen';
+import NotificationTestPage from './Screens/NotificationTestPage';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { configureNotificationListeners, registerExistingNotificationIfEnabled } from './service/notificationService';
+import * as Application from 'expo-application';
+import ForceUpdateScreen from './Components/ForceUpdateScreen';
+
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.hassanali2.quranplus';
 
 try {
   SplashScreen.preventAutoHideAsync().catch(() => {
@@ -86,6 +90,7 @@ function TabBar() {
       <Tabs.Screen
         name="عجلة الحظ"
         component={QariSpinnerScreen}
+        // component={NotificationTest}
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
@@ -126,11 +131,89 @@ function TabBar() {
 
 export default function App() {
   const [appReady, setAppReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState('loading');
+  const [updateRequired, setUpdateRequired] = useState(false);
   const splashHidden = React.useRef(false);
+
+  const retryRequiredUpdate = async () => {
+    try {
+      const { default: SpInAppUpdates, IAUUpdateKind } = require('sp-react-native-in-app-updates');
+      const inAppUpdates = new SpInAppUpdates();
+      await inAppUpdates.startUpdate({ updateType: IAUUpdateKind.IMMEDIATE });
+    } catch (error) {
+      console.warn('Failed to start the required Google Play update:', error);
+    }
+  };
+
+  const openPlayStore = async () => {
+    try {
+      await Linking.openURL(PLAY_STORE_URL);
+    } catch (error) {
+      console.warn('Failed to open the Google Play listing:', error);
+    }
+  };
 
   useEffect(() => {
     I18nManager.allowRTL(true);
     I18nManager.forceRTL(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const bootstrapApp = async () => {
+      try {
+        if (Platform.OS === 'android') {
+          try {
+            const { default: SpInAppUpdates, IAUUpdateKind } = require('sp-react-native-in-app-updates');
+            const inAppUpdates = new SpInAppUpdates();
+            const currentVersionCode = String(
+              Application.nativeBuildVersion ?? Application.nativeApplicationVersion ?? '1'
+            );
+            const update = await inAppUpdates.checkNeedsUpdate({ curVersion: currentVersionCode });
+
+            if (update.shouldUpdate) {
+              if (active) setUpdateRequired(true);
+              try {
+                await inAppUpdates.startUpdate({ updateType: IAUUpdateKind.IMMEDIATE });
+              } catch (error) {
+                console.warn('Required Google Play update was not completed:', error);
+              }
+              return;
+            }
+          } catch (error) {
+            console.warn('Could not check Google Play for app updates:', error);
+          }
+        }
+
+        // const setupDone = await AsyncStorage.getItem('notificationSetupComplete');
+        const setupDone = await AsyncStorage.getItem('notificationSetupComplete');
+
+        if (active) {
+          if (setupDone === 'true') {
+            await registerExistingNotificationIfEnabled();
+            setInitialRoute('TabBar');
+            return;
+          }
+
+          setInitialRoute('NotificationSetup');
+        }
+      } catch (error) {
+        console.warn('Failed to bootstrap notification setup:', error);
+        if (active) {
+          setInitialRoute('NotificationSetup');
+        }
+      }
+    };
+
+    bootstrapApp();
+
+    const unsubscribe = configureNotificationListeners();
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const [fontsLoaded, fontError] = useFonts({
@@ -167,7 +250,11 @@ export default function App() {
     return () => clearTimeout(timeoutId);
   }, [hideSplash]);
 
-  if (!appReady) {
+  if (updateRequired) {
+    return <ForceUpdateScreen onRetry={retryRequiredUpdate} onOpenStore={openPlayStore} />;
+  }
+
+  if (!appReady || initialRoute === 'loading') {
     return null;
   }
 
@@ -183,7 +270,13 @@ export default function App() {
 
           <AudioProvider>
             <NavigationContainer>
-              <Stack.Navigator>
+              <Stack.Navigator initialRouteName={initialRoute === 'loading' ? 'NotificationSetup' : initialRoute}>
+                <Stack.Screen
+                  name="NotificationSetup"
+                  component={NotificationSetupScreen}
+                  options={{ headerShown: false }}
+                />
+
                 <Stack.Screen
                   name="TabBar"
                   component={TabBar}
@@ -199,6 +292,12 @@ export default function App() {
                 <Stack.Screen
                   name="Settings"
                   component={SettingsScreen}
+                  options={{ headerShown: false }}
+                />
+
+                <Stack.Screen
+                  name="NotificationTestPage"
+                  component={NotificationTestPage}
                   options={{ headerShown: false }}
                 />
 

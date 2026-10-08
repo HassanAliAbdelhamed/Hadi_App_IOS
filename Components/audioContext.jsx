@@ -164,6 +164,12 @@ export const AudioProvider = ({ children }) => {
           artwork: qare.img,
         }]);
         await TrackPlayer.play();
+
+        const nextPlaybackState = await TrackPlayer.getPlaybackState();
+        if (nextPlaybackState?.state !== State.Playing) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          await TrackPlayer.play();
+        }
       } catch (error) {
         console.warn("Error starting next Surah:", error.message);
       } finally {
