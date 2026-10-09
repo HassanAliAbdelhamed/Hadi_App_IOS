@@ -12,7 +12,7 @@ import RadioScreen from './Screens/radioScreen';
 import { AudioProvider } from './Components/audioContext';
 import MiniPlayer from './Components/MiniPlayer';
 import ErrorBoundary from './Components/ErrorBoundary';
-import { Linking, Platform, StatusBar, SafeAreaView, StyleSheet, View, I18nManager } from 'react-native';
+import { AppState, Linking, Platform, StatusBar, SafeAreaView, StyleSheet, View, I18nManager } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import QuraaScreen from './Screens/QuraaScreen';
 import FortuneWheelIcon from './Components/NavbarIcons/FortuneWheelIcon';
@@ -24,7 +24,11 @@ import NotificationSetupScreen from './Screens/NotificationSetupScreen';
 import NotificationTestPage from './Screens/NotificationTestPage';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { configureNotificationListeners, registerExistingNotificationIfEnabled } from './service/notificationService';
+import {
+  configureNotificationListeners,
+  registerExistingNotificationIfEnabled,
+  syncDailyReminderSettings,
+} from './service/notificationService';
 import * as Application from 'expo-application';
 import ForceUpdateScreen from './Components/ForceUpdateScreen';
 
@@ -209,10 +213,18 @@ export default function App() {
     bootstrapApp();
 
     const unsubscribe = configureNotificationListeners();
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncDailyReminderSettings().catch((error) => {
+          console.warn('Failed to resync local daily reminder on foreground:', error);
+        });
+      }
+    });
 
     return () => {
       active = false;
       unsubscribe();
+      appStateSubscription.remove();
     };
   }, []);
 

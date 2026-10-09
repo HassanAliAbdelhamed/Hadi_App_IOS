@@ -3,9 +3,159 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 
 const DAILY_NOTIFICATION_TIME_KEY = "dailyNotificationTime";
+const DAILY_NOTIFICATION_MESSAGE_KEY = "dailyNotificationMessage";
 const NOTIFICATION_SETUP_COMPLETE_KEY = "notificationSetupComplete";
 const INSTALLATION_ID_KEY = "notificationInstallationId";
+const DAILY_REMINDER_NOTIFICATION_ID = "dailyReminderNotification";
+const DAILY_REMINDER_CHANNEL_ID = "daily-reminder";
+const LOCAL_DAILY_REMINDER_SOURCE = "local-daily-reminder";
+const DEFAULT_DAILY_REMINDER_MESSAGE = "حان وقت الإستماع للقرآن الكريم";
 const API_BASE_URL = "https://ayaaplus.runasp.net";
+
+export function parseDailyReminderTime(timeValue) {
+  if (!timeValue) {
+    return null;
+  }
+
+  const normalized = String(timeValue).trim();
+  const match = normalized.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) {
+    return null;
+  }
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return null;
+  }
+
+  return { hour, minute };
+}
+
+export async function ensureDailyReminderChannel() {
+  if (Device.osName !== "Android") {
+    return;
+  }
+
+  await Notifications.setNotificationChannelAsync(DAILY_REMINDER_CHANNEL_ID, {
+    name: "تذكير اليومي",
+    importance: Notifications.AndroidImportance.MAX,
+    sound: "default",
+    vibrationPattern: [0, 250, 250, 250],
+  });
+}
+
+export async function scheduleDailyReminder(
+  hour,
+  minute,
+  message = DEFAULT_DAILY_REMINDER_MESSAGE
+) {
+  const normalizedHour = Number(hour);
+  const normalizedMinute = Number(minute);
+
+  if (
+    !Number.isInteger(normalizedHour) ||
+    !Number.isInteger(normalizedMinute) ||
+    normalizedHour < 0 ||
+    normalizedHour > 23 ||
+    normalizedMinute < 0 ||
+    normalizedMinute > 59
+  ) {
+    throw new Error("Invalid daily reminder time");
+  }
+
+  await requestNotificationPermission();
+  await ensureDailyReminderChannel();
+
+  await cancelDailyReminder();
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: DAILY_REMINDER_NOTIFICATION_ID,
+    content: {
+      title: "تذكير يومي",
+      body: message.trim() || DEFAULT_DAILY_REMINDER_MESSAGE,
+      sound: "default",
+      data: {
+        source: LOCAL_DAILY_REMINDER_SOURCE,
+      },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: normalizedHour,
+      minute: normalizedMinute,
+      channelId: DAILY_REMINDER_CHANNEL_ID,
+    },
+  });
+
+  return DAILY_REMINDER_NOTIFICATION_ID;
+}
+
+export async function cancelDailyReminder() {
+  await Notifications.cancelScheduledNotificationAsync(DAILY_REMINDER_NOTIFICATION_ID);
+}
+
+export async function rescheduleDailyReminder(hour, minute) {
+  const message = await getStoredDailyReminderMessage();
+  return scheduleDailyReminder(hour, minute, message);
+}
+
+export async function syncDailyReminderSettings() {
+  const notificationTime = await getStoredNotificationTime();
+
+  if (!notificationTime) {
+    await cancelDailyReminder();
+    return false;
+  }
+
+  const parsedTime = parseDailyReminderTime(notificationTime);
+
+  if (!parsedTime) {
+    await cancelDailyReminder();
+    return false;
+  }
+
+  try {
+    const message = await getStoredDailyReminderMessage();
+    await scheduleDailyReminder(parsedTime.hour, parsedTime.minute, message);
+    return true;
+  } catch (error) {
+    console.warn("Failed to sync local daily reminder settings:", error);
+    return false;
+  }
+}
+
+export async function getStoredDailyReminderMessage() {
+  const message = await AsyncStorage.getItem(DAILY_NOTIFICATION_MESSAGE_KEY);
+  return message || DEFAULT_DAILY_REMINDER_MESSAGE;
+}
+
+export async function saveLocalDailyReminderSettings(notificationTime, message) {
+  const parsedTime = parseDailyReminderTime(notificationTime);
+
+  if (!parsedTime) {
+    throw new Error("Invalid daily reminder time");
+  }
+
+  const normalizedTime = `${String(parsedTime.hour).padStart(2, "0")}:${String(
+    parsedTime.minute
+  ).padStart(2, "0")}:00`;
+  const normalizedMessage = String(message || "").trim() || DEFAULT_DAILY_REMINDER_MESSAGE;
+
+  await AsyncStorage.multiSet([
+    [DAILY_NOTIFICATION_TIME_KEY, normalizedTime],
+    [DAILY_NOTIFICATION_MESSAGE_KEY, normalizedMessage],
+  ]);
+  await setNotificationSetupComplete(true);
+  await scheduleDailyReminder(parsedTime.hour, parsedTime.minute, normalizedMessage);
+
+  return { notificationTime: normalizedTime, message: normalizedMessage };
+}
 
 export function getNotificationTimeOptions() {
   const options = [];
@@ -61,6 +211,7 @@ export async function setNotificationSetupComplete(isComplete) {
 
 export async function clearNotificationTime() {
   await AsyncStorage.removeItem(DAILY_NOTIFICATION_TIME_KEY);
+  await cancelDailyReminder();
   await setNotificationSetupComplete(true);
 }
 
@@ -79,10 +230,6 @@ export async function getOrCreateInstallationId() {
 }
 
 export async function requestNotificationPermission() {
-  if (!Device.isDevice) {
-    throw new Error("Notifications require a physical device");
-  }
-
   if (Device.osName === "Android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "Daily reminders",
@@ -107,6 +254,10 @@ export async function requestNotificationPermission() {
 }
 
 export async function getPushToken() {
+  if (!Device.isDevice) {
+    throw new Error("Push tokens require a physical device");
+  }
+
   await requestNotificationPermission();
 
   const result = await Notifications.getDevicePushTokenAsync();
@@ -122,6 +273,7 @@ export async function getPushToken() {
 export async function registerDeviceNotification(notificationTime, deviceToken) {
   if (!notificationTime && !deviceToken) {
     await AsyncStorage.setItem(DAILY_NOTIFICATION_TIME_KEY, "");
+    await cancelDailyReminder();
     await setNotificationSetupComplete(true);
     return { skipped: true };
   }
@@ -152,6 +304,9 @@ export async function registerDeviceNotification(notificationTime, deviceToken) 
 
   await AsyncStorage.setItem(DAILY_NOTIFICATION_TIME_KEY, notificationTime || "");
   await setNotificationSetupComplete(true);
+  if (!notificationTime) {
+    await cancelDailyReminder();
+  }
 
   const responseText = await response.text();
   return responseText ? JSON.parse(responseText) : { registered: true };
@@ -185,28 +340,39 @@ export async function registerExistingNotificationIfEnabled() {
   const notificationTime = await getStoredNotificationTime();
 
   if (!notificationTime) {
+    await cancelDailyReminder();
     return false;
   }
 
+  const localReminderScheduled = await syncDailyReminderSettings();
+
   try {
     await registerDeviceNotification(notificationTime);
-    return true;
   } catch (error) {
-    console.warn("Daily notification registration failed:", error);
-    return false;
+    console.warn("Daily notification backend registration failed:", error);
   }
+
+  return localReminderScheduled;
 }
 
 export function configureNotificationListeners() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
     }),
   });
 
-  const receivedListener = Notifications.addNotificationReceivedListener(async () => {
+  const isLocalDailyReminder = (notification) =>
+    notification?.request?.content?.data?.source === LOCAL_DAILY_REMINDER_SOURCE;
+
+  const receivedListener = Notifications.addNotificationReceivedListener(async (notification) => {
+    if (isLocalDailyReminder(notification)) {
+      return;
+    }
+
     try {
       await updateNotifiedAtOnServer();
     } catch (error) {
@@ -214,7 +380,11 @@ export function configureNotificationListeners() {
     }
   });
 
-  const responseListener = Notifications.addNotificationResponseReceivedListener(async () => {
+  const responseListener = Notifications.addNotificationResponseReceivedListener(async (notification) => {
+    if (isLocalDailyReminder(notification)) {
+      return;
+    }
+
     try {
       await updateNotifiedAtOnServer();
     } catch (error) {
