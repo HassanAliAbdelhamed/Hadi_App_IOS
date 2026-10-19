@@ -92,8 +92,8 @@ android {
         applicationId 'com.hassanali2.quranplus'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 50
-        versionName "1.2.2"
+        versionCode 52
+        versionName "1.2.4"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

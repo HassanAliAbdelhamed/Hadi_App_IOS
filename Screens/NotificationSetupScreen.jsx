@@ -3,6 +3,7 @@ import {
   Alert,
   I18nManager,
   PanResponder,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,13 +11,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AllColors from "../assets/Colors";
 import {
+  canScheduleExactAlarms,
   clearNotificationTime,
   formatNotificationTimeLabel,
   getPushToken,
   getStoredDailyReminderMessage,
   getStoredNotificationTime,
+  openExactAlarmSettings,
   registerDeviceNotification,
   saveLocalDailyReminderSettings,
 } from "../service/notificationService";
@@ -82,6 +86,11 @@ const Hand = ({ angle, length, thickness, color }) => (
 );
 
 export default function NotificationSetupScreen({ navigation, route }) {
+  const insets = useSafeAreaInsets();
+  // Classic 3-button nav: inset is ~48dp (lifts footer above the buttons).
+  // Gesture nav: inset is ~0-24dp (footer stays compact).
+  const footerBottomPadding = 16 + insets.bottom;
+
   const isFromSettings = route?.params?.fromSettings === true;
   const [selectedTime, setSelectedTime] = useState("07:00:00");
   const [mode, setMode] = useState("hour"); // "hour" -> then "minute"
@@ -105,6 +114,13 @@ export default function NotificationSetupScreen({ navigation, route }) {
 
   useEffect(() => {
     let active = true;
+
+    if (Platform.OS !== "android") {
+      setTokenLoading(false);
+      return () => {
+        active = false;
+      };
+    }
 
     getPushToken()
       .then((token) => {
@@ -227,8 +243,30 @@ export default function NotificationSetupScreen({ navigation, route }) {
       localReminderSaved = true;
       setSelectedTime(localSettings.notificationTime);
 
-      const token = deviceToken || await getPushToken();
-      await registerDeviceNotification(localSettings.notificationTime, token);
+      if (Platform.OS === "android") {
+        const token = deviceToken || await getPushToken();
+        await registerDeviceNotification(localSettings.notificationTime, token);
+      }
+
+      const exactAlarmsAllowed = await canScheduleExactAlarms();
+      if (!exactAlarmsAllowed) {
+        Alert.alert(
+          "تفعيل التذكير في الوقت المحدد",
+          "ليصلك التذكير يومياً حتى لو كان التطبيق مغلقاً، فعّل إذن المنبهات والتذكيرات لهذا التطبيق.",
+          [
+            { text: "لاحقاً", style: "cancel", onPress: finish },
+            {
+              text: "فتح الإعدادات",
+              onPress: async () => {
+                await openExactAlarmSettings();
+                finish();
+              },
+            },
+          ]
+        );
+        return;
+      }
+
       finish();
     } catch (error) {
       console.warn("Failed to save daily notification time:", error);
@@ -247,7 +285,7 @@ export default function NotificationSetupScreen({ navigation, route }) {
     setLoading(true);
     try {
       await clearNotificationTime();
-      if (deviceToken) {
+      if (Platform.OS === "android" && deviceToken) {
         await registerDeviceNotification(null, deviceToken);
       }
       finish();
@@ -279,7 +317,7 @@ export default function NotificationSetupScreen({ navigation, route }) {
             : "اختر الساعة ثم الدقائق التي تريد أن يتذكرك فيها التطبيق يوميًا لتلاوة القرآن."}
         </Text>
 
-        {!deviceToken && !tokenLoading && (
+        {Platform.OS === "android" && !deviceToken && !tokenLoading && (
           <Text style={styles.permissionStatus}>
             فعّل إذن الإشعارات ثم اضغط حفظ لتسجيل جهازك.
           </Text>
@@ -292,11 +330,11 @@ export default function NotificationSetupScreen({ navigation, route }) {
           <View style={styles.digitalTime}>
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setMode("hour")}
-              style={[styles.segment, !isMinuteMode && styles.segmentActive]}
+              onPress={() => setMode("minute")}
+              style={[styles.segment, isMinuteMode && styles.segmentActive]}
             >
-              <Text style={[styles.segmentText, !isMinuteMode && styles.segmentTextActive]}>
-                {pad(hour12)}
+              <Text style={[styles.segmentText, isMinuteMode && styles.segmentTextActive]}>
+                {pad(minute)}
               </Text>
             </TouchableOpacity>
 
@@ -306,11 +344,11 @@ export default function NotificationSetupScreen({ navigation, route }) {
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setMode("minute")}
-              style={[styles.segment, isMinuteMode && styles.segmentActive]}
+              onPress={() => setMode("hour")}
+              style={[styles.segment, !isMinuteMode && styles.segmentActive]}
             >
-              <Text style={[styles.segmentText, isMinuteMode && styles.segmentTextActive]}>
-                {pad(minute)}
+              <Text style={[styles.segmentText, !isMinuteMode && styles.segmentTextActive]}>
+                {pad(hour12)}
               </Text>
             </TouchableOpacity>
           </View>
@@ -322,6 +360,7 @@ export default function NotificationSetupScreen({ navigation, route }) {
             >
               <Text style={[styles.periodText, !isPM && styles.periodTextActive]}>ص</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => togglePeriod(true)}
               style={[styles.periodBtn, isPM && styles.periodBtnActive]}
@@ -330,10 +369,6 @@ export default function NotificationSetupScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
         </View>
-
-        <Text style={styles.stepText}>
-          {isMinuteMode ? "الخطوة 2 من 2: اختر الدقائق" : "الخطوة 1 من 2: اختر الساعة"}
-        </Text>
 
         <Text style={styles.selectedLabel}>
           التذكير: <Text style={styles.selectedTime}>{currentLabel}</Text>
@@ -438,7 +473,7 @@ export default function NotificationSetupScreen({ navigation, route }) {
         <Text style={styles.nowText}>الوقت الآن: {nowLabel}</Text>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: footerBottomPadding }]}>
         <TouchableOpacity
           style={[styles.saveButton, loading && styles.saveButtonDisabled]}
           activeOpacity={0.8}
@@ -523,7 +558,7 @@ const styles = StyleSheet.create({
   selectedLabel: { alignSelf: "stretch", writingDirection: "rtl", color: "#b7b9b7", fontFamily: "Cairo", fontSize: 13, textAlign: "center" },
   selectedTime: { color: AllColors.greenColor, fontFamily: "Cairo", fontSize: 15 },
   messageField: { alignSelf: "stretch", marginTop: 12, marginBottom: 2 },
-  messageLabel: { writingDirection: "rtl", color: AllColors.whiteColor, fontFamily: "Cairo", fontSize: 14, marginBottom: 4 },
+  messageLabel: { textAlign: "right", color: AllColors.whiteColor, fontFamily: "Cairo", fontSize: 14, marginBottom: 4 },
   messageInput: {
     minHeight: 64,
     maxHeight: 96,
@@ -599,12 +634,13 @@ const styles = StyleSheet.create({
   nowText: { alignSelf: "stretch", writingDirection: "rtl", color: "#7d8280", fontFamily: "Cairo", fontSize: 13, textAlign: "center" },
   permissionStatus: { color: "#d5b779", fontFamily: "Cairo", fontSize: 13, textAlign: "center", marginBottom: 8 },
 
+  // paddingBottom is applied at runtime: 16 + the system bottom inset
   footer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
     backgroundColor: "#171919",
     borderTopWidth: 1,
     borderTopColor: "#262a2a",

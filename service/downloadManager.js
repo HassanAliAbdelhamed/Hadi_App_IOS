@@ -54,6 +54,8 @@ class DownloadManager {
         throw new Error('Storage permission denied');
       }
 
+      await this.ensureBaseDirectory();
+
       // Create reciter directory if it doesn't exist
       const reciterDir = `${BASE_DIR}/${reciterName}`;
       await RNFS.mkdir(reciterDir);

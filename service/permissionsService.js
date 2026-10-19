@@ -19,6 +19,12 @@ const STORAGE_PERMISSIONS = Platform.select({
 
 export const checkStoragePermission = async () => {
   try {
+    // Downloads are saved inside the app's sandbox on iOS, so no media-library
+    // or filesystem permission is needed (or appropriate to request).
+    if (Platform.OS === 'ios') {
+      return true;
+    }
+
     // For Android 11 (API level 30) and above, check MANAGE_EXTERNAL_STORAGE
     if (Platform.OS === 'android' && Platform.Version >= 30) {
       const hasPermission = await PermissionsAndroid.check(

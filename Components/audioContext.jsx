@@ -7,9 +7,9 @@ import TrackPlayer, {
   Event,
   useTrackPlayerEvents,
 } from "react-native-track-player";
-import { getSwarByQare } from "../assets/Apis/quraaApi";
 
 const AudioContext = createContext();
+const TRACK_CHANGED_EVENTS = [Event.PlaybackActiveTrackChanged];
 
 export const AudioProvider = ({ children }) => {
   const [playerReady, setPlayerReady] = useState(false);
@@ -19,7 +19,6 @@ export const AudioProvider = ({ children }) => {
   const progress = useProgress();
   const setupAttempted = useRef(false);
   const playerSetupTimeout = useRef(null);
-  const nextTrackInProgress = useRef(false);
 
   const updateCurrentInfo = useCallback((track) => {
     if (!track) return;
@@ -89,9 +88,12 @@ export const AudioProvider = ({ children }) => {
   }, []);
 
   useTrackPlayerEvents(
-  [Event.PlaybackActiveTrackChanged],
-  async (event) => {
-    if (event.index != null) {
+    TRACK_CHANGED_EVENTS,
+    async (event) => {
+      if (event.index == null) {
+        return;
+      }
+
       try {
         const track = await TrackPlayer.getTrack(event.index);
 
@@ -100,80 +102,6 @@ export const AudioProvider = ({ children }) => {
         }
       } catch (e) {
         console.warn("Error fetching track:", e.message);
-      }
-    }
-  }, [updateCurrentInfo]);
-
-  useTrackPlayerEvents(
-    [Event.PlaybackQueueEnded],
-    async (event) => {
-      if (nextTrackInProgress.current) return;
-      nextTrackInProgress.current = true;
-
-      try {
-        const activeTrack = await TrackPlayer.getActiveTrack()
-          || (event.track != null ? await TrackPlayer.getTrack(event.track) : null);
-        const qareId = activeTrack?.qId;
-        const currentNumber = Number(activeTrack?.surahNumber);
-
-        if (qareId == null || !Number.isInteger(currentNumber)) return;
-
-        const qare = await getSwarByQare(qareId);
-        const rewayah = qare?.Rwayat?.find((item) => (
-          activeTrack.rwayahId != null && String(item.id) === String(activeTrack.rwayahId)
-        )) || qare?.Rwayat?.find((item) => (
-          activeTrack.rwayahName && item.name === activeTrack.rwayahName
-        )) || qare?.Rwayat?.[0];
-
-        const orderedSuar = [...(rewayah?.suar || [])]
-          .filter((item) => Number.isInteger(Number(item.surahNumber)))
-          .sort((left, right) => Number(left.surahNumber) - Number(right.surahNumber));
-
-        if (orderedSuar.length === 0) return;
-
-        const nextNumbers = Array.from({ length: 114 }, (_, index) => (
-          ((currentNumber + index) % 114) + 1
-        ));
-        const nextSurah = nextNumbers
-          .map((number) => orderedSuar.find((item) => Number(item.surahNumber) === number))
-          .find((item) => item && (item.audioUrl || rewayah.link || qare?.Audiosource));
-
-        if (!nextSurah) return;
-
-        const rawAudioUrl = nextSurah.audioUrl || "";
-        const baseUrl = rewayah.link || qare?.Audiosource || "";
-        const audioUrl = rawAudioUrl.startsWith("http")
-          ? rawAudioUrl
-          : baseUrl
-            ? `${baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`}${rawAudioUrl || String(nextSurah.surahNumber).padStart(3, "0") + ".mp3"}`
-            : "";
-
-        if (!audioUrl) return;
-
-        await TrackPlayer.reset();
-        await TrackPlayer.add([{
-          id: nextSurah.id,
-          qId: qare.id,
-          rwayahId: rewayah.id,
-          rwayahName: rewayah.name,
-          surahNumber: nextSurah.surahNumber,
-          audioBaseUrl: baseUrl,
-          url: audioUrl,
-          title: nextSurah.title,
-          artist: qare.title,
-          artwork: qare.img,
-        }]);
-        await TrackPlayer.play();
-
-        const nextPlaybackState = await TrackPlayer.getPlaybackState();
-        if (nextPlaybackState?.state !== State.Playing) {
-          await new Promise((resolve) => setTimeout(resolve, 150));
-          await TrackPlayer.play();
-        }
-      } catch (error) {
-        console.warn("Error starting next Surah:", error.message);
-      } finally {
-        nextTrackInProgress.current = false;
       }
     }
   );

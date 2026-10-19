@@ -2,7 +2,7 @@
   "expo": {
     "name": "هَدْي",
     "slug": "quran-plus",
-    "version": "1.2.2",
+    "version": "1.2.4",
     "orientation": "portrait",
     "icon": "./assets/images/Logo.png",
     "scheme": "myapp",
@@ -13,11 +13,20 @@
       "backgroundColor": "#141515"
     },
     "ios": {
+      "bundleIdentifier": "com.hassanali2.quranplus",
+      "buildNumber": "1",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
       "supportsTablet": true
     },
     "android": {
       "package": "com.hassanali2.quranplus",
-      "versionCode": 50,
+      "versionCode": 52,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Logo.png",
@@ -28,7 +37,11 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "WAKE_LOCK",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
         "POST_NOTIFICATIONS"
       ]
     },
@@ -38,7 +51,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-    "expo-router",
+      "expo-router",
       "expo-font",
       [
         "expo-notifications",

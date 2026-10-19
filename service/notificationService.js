@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import { Linking, Platform } from "react-native";
 
 const DAILY_NOTIFICATION_TIME_KEY = "dailyNotificationTime";
 const DAILY_NOTIFICATION_MESSAGE_KEY = "dailyNotificationMessage";
@@ -39,7 +40,7 @@ export function parseDailyReminderTime(timeValue) {
 }
 
 export async function ensureDailyReminderChannel() {
-  if (Device.osName !== "Android") {
+  if (Platform.OS !== "android") {
     return;
   }
 
@@ -48,13 +49,101 @@ export async function ensureDailyReminderChannel() {
     importance: Notifications.AndroidImportance.MAX,
     sound: "default",
     vibrationPattern: [0, 250, 250, 250],
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    bypassDnd: false,
+    enableVibrate: true,
+    showBadge: false,
   });
+}
+
+export async function canScheduleExactAlarms() {
+  if (Platform.OS !== "android" || Platform.Version < 31) {
+    return true;
+  }
+
+  try {
+    if (typeof Notifications.canScheduleExactNotificationsAsync === "function") {
+      return Boolean(await Notifications.canScheduleExactNotificationsAsync());
+    }
+  } catch (error) {
+    console.warn("Could not check exact alarm permission:", error);
+  }
+
+  return true;
+}
+
+export async function openExactAlarmSettings() {
+  if (Platform.OS !== "android") {
+    return false;
+  }
+
+  try {
+    await Linking.sendIntent("android.settings.REQUEST_SCHEDULE_EXACT_ALARM");
+    return true;
+  } catch (_error) {
+    try {
+      await Linking.sendIntent("android.settings.REQUEST_SCHEDULE_EXACT_ALARM", [
+        {
+          key: "android.provider.extra.APP_PACKAGE",
+          value: "com.hassanali2.quranplus",
+        },
+      ]);
+      return true;
+    } catch (error) {
+      console.warn("Could not open exact alarm settings:", error);
+      return false;
+    }
+  }
+}
+
+function isMatchingDailyTrigger(trigger, hour, minute) {
+  if (!trigger) {
+    return false;
+  }
+
+  const triggerHour = Number(trigger.hour);
+  const triggerMinute = Number(trigger.minute);
+  const triggerType = String(trigger.type || "").toLowerCase();
+
+  return (
+    triggerHour === hour &&
+    triggerMinute === minute &&
+    (triggerType.includes("daily") || trigger.repeats === true)
+  );
+}
+
+async function hasMatchingDailyReminder(hour, minute) {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  return scheduled.some((item) => (
+    item.identifier === DAILY_REMINDER_NOTIFICATION_ID &&
+    isMatchingDailyTrigger(item.trigger, hour, minute)
+  ));
+}
+
+async function scheduleDailyReminderRequest(content, trigger) {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: DAILY_REMINDER_NOTIFICATION_ID,
+      content,
+      trigger: {
+        ...trigger,
+        delivery: "alarmClock",
+      },
+    });
+  } catch (_error) {
+    await Notifications.scheduleNotificationAsync({
+      identifier: DAILY_REMINDER_NOTIFICATION_ID,
+      content,
+      trigger,
+    });
+  }
 }
 
 export async function scheduleDailyReminder(
   hour,
   minute,
-  message = DEFAULT_DAILY_REMINDER_MESSAGE
+  message = DEFAULT_DAILY_REMINDER_MESSAGE,
+  { force = false } = {}
 ) {
   const normalizedHour = Number(hour);
   const normalizedMinute = Number(minute);
@@ -73,26 +162,30 @@ export async function scheduleDailyReminder(
   await requestNotificationPermission();
   await ensureDailyReminderChannel();
 
+  if (!force && await hasMatchingDailyReminder(normalizedHour, normalizedMinute)) {
+    return DAILY_REMINDER_NOTIFICATION_ID;
+  }
+
   await cancelDailyReminder();
 
-  await Notifications.scheduleNotificationAsync({
-    identifier: DAILY_REMINDER_NOTIFICATION_ID,
-    content: {
-      title: "تذكير يومي",
-      body: message.trim() || DEFAULT_DAILY_REMINDER_MESSAGE,
-      sound: "default",
-      data: {
-        source: LOCAL_DAILY_REMINDER_SOURCE,
-      },
+  const content = {
+    title: "تذكير يومي",
+    body: message.trim() || DEFAULT_DAILY_REMINDER_MESSAGE,
+    sound: "default",
+    sticky: false,
+    autoDismiss: true,
+    data: {
+      source: LOCAL_DAILY_REMINDER_SOURCE,
     },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: normalizedHour,
-      minute: normalizedMinute,
-      channelId: DAILY_REMINDER_CHANNEL_ID,
-    },
-  });
+  };
+  const trigger = {
+    type: Notifications.SchedulableTriggerInputTypes.DAILY,
+    hour: normalizedHour,
+    minute: normalizedMinute,
+    channelId: DAILY_REMINDER_CHANNEL_ID,
+  };
 
+  await scheduleDailyReminderRequest(content, trigger);
   return DAILY_REMINDER_NOTIFICATION_ID;
 }
 
@@ -152,7 +245,9 @@ export async function saveLocalDailyReminderSettings(notificationTime, message) 
     [DAILY_NOTIFICATION_MESSAGE_KEY, normalizedMessage],
   ]);
   await setNotificationSetupComplete(true);
-  await scheduleDailyReminder(parsedTime.hour, parsedTime.minute, normalizedMessage);
+  await scheduleDailyReminder(parsedTime.hour, parsedTime.minute, normalizedMessage, {
+    force: true,
+  });
 
   return { notificationTime: normalizedTime, message: normalizedMessage };
 }
@@ -230,11 +325,12 @@ export async function getOrCreateInstallationId() {
 }
 
 export async function requestNotificationPermission() {
-  if (Device.osName === "Android") {
+  if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "Daily reminders",
       importance: Notifications.AndroidImportance.MAX,
     });
+    await ensureDailyReminderChannel();
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -271,6 +367,12 @@ export async function getPushToken() {
 }
 
 export async function registerDeviceNotification(notificationTime, deviceToken) {
+  // iOS reminders are scheduled locally. This API accepts FCM tokens, while
+  // expo-notifications returns an APNs token on iOS.
+  if (Platform.OS === "ios") {
+    return { registered: false, localOnly: true };
+  }
+
   if (!notificationTime && !deviceToken) {
     await AsyncStorage.setItem(DAILY_NOTIFICATION_TIME_KEY, "");
     await cancelDailyReminder();
@@ -346,6 +448,10 @@ export async function registerExistingNotificationIfEnabled() {
 
   const localReminderScheduled = await syncDailyReminderSettings();
 
+  if (Platform.OS === "ios") {
+    return localReminderScheduled;
+  }
+
   try {
     await registerDeviceNotification(notificationTime);
   } catch (error) {
@@ -358,6 +464,7 @@ export async function registerExistingNotificationIfEnabled() {
 export function configureNotificationListeners() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
+      shouldShowAlert: true,
       shouldShowBanner: true,
       shouldShowList: true,
       shouldPlaySound: true,
