@@ -282,13 +282,13 @@ const Styles = StyleSheet.create({
   cardBoxTitle: {
     fontSize: 10,
     color: TEXT_MUTED,
-    textAlign: "left",
+    textAlign: "right",
     fontFamily: "Cairo",
   },
   cardTitle: {
     fontSize: 16,
     color: TEXT_LIGHT,
-    textAlign: "left",
+    textAlign: "right",
     fontWeight: "600",
     fontFamily: "Cairo",
     marginTop: 2,
@@ -308,7 +308,7 @@ const Styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
     backgroundColor: "#E53935",
-    marginRight: 5,
+    marginEnd: 5,
   },
   eqRow: {
     flexDirection: "row",
@@ -318,7 +318,7 @@ const Styles = StyleSheet.create({
   },
   eqBar: {
     width: 3,
-    marginRight: 3,
+    marginEnd: 3,
     borderRadius: 2,
     backgroundColor: GREEN,
   },

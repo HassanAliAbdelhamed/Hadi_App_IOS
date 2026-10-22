@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
-  I18nManager,
   PanResponder,
   Platform,
   ScrollView,
@@ -38,7 +37,7 @@ const SEGMENT_HEIGHT = 72;
 const DIGIT_FONT_SIZE = 40;
 
 // Rows that must read left-to-right visually (clock digits) even when the app is RTL
-const LTR_ROW = I18nManager.isRTL ? "row-reverse" : "row";
+const LTR_ROW = "row-reverse";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -504,7 +503,7 @@ export default function NotificationSetupScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: AllColors.BlackBackgroundColor, direction: "ltr" },
+  container: { flex: 1, backgroundColor: AllColors.BlackBackgroundColor, direction: "rtl" },
   content: { flex: 1 },
   contentContainer: { paddingHorizontal: 20, paddingTop: 30, paddingBottom: 16, alignItems: "center" },
   title: { alignSelf: "stretch", writingDirection: "rtl", color: AllColors.whiteColor, fontFamily: "Cairo", fontSize: 26, textAlign: "center", marginBottom: 8 },

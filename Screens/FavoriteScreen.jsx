@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontFamily: 'Cairo',
-    marginLeft: 15,
+    marginStart: 15,
   },
   swaraGrid: {
     flexDirection: 'row',

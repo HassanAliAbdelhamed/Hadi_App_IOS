@@ -198,7 +198,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    direction:'ltr',
+    direction: "rtl",
     backgroundColor: AllColors.BlackBackgroundColor,
     paddingHorizontal: 16,
     paddingTop: 30,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
 
   /* Header */
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     marginBottom: 28,
   },
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   /* Rows */
   row: {
     minHeight: 68,
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   rowContent: {
     flex: 1,
     alignItems: "flex-end",
-    marginRight: 12,
+    marginStart: 12,
   },
 
   rowText: {

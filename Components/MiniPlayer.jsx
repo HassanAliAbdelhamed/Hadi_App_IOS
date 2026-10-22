@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   expandedContainer: {
     position: "absolute",
     bottom: 0,
-    left: 0,
+    right: 0,
     width,
     height,
     backgroundColor: "#000",
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   backButton: {
     position: "absolute",
     top: 40,
-    left: 20,
+    right: 20,
     zIndex: 10,
     backgroundColor: "#27292f",
     borderRadius: 30,

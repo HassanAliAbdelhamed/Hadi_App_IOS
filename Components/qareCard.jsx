@@ -85,12 +85,12 @@ const Styles = StyleSheet.create({
   cardBoxTitle: {
     fontSize: 10,
     color: 'white',
-    textAlign: 'left',
+    textAlign: 'right',
   },
   cardTitle: {
     fontSize: 16,
     color: 'white',
-    textAlign: 'left',
+    textAlign: 'right',
     fontWeight: '600',
     fontFamily: 'Cairo',
   },

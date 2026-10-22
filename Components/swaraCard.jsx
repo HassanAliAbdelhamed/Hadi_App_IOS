@@ -165,7 +165,6 @@ const styles = StyleSheet.create({
     marginHorizontal:16,
   },
   left: {
-    left: 0,
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",

@@ -205,7 +205,7 @@ const Styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
 
-    marginRight: 12,
+    marginEnd: 12,
   },
 
   radioSelected: {

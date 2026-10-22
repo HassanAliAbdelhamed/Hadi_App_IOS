@@ -35,7 +35,7 @@ const Styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 5,
-    flexDirection: "row",
+    flexDirection: "row-reverse",
   },
   HeaderText: {
     color: "white",

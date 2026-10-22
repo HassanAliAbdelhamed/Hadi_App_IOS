@@ -142,9 +142,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   result: {
-    borderLeftWidth: 3,
-    borderLeftColor: AllColors.greenColor,
-    paddingLeft: 14,
+    borderStartWidth: 3,
+    borderStartColor: AllColors.greenColor,
+    paddingStart: 14,
     marginBottom: 20,
   },
   successTitle: {

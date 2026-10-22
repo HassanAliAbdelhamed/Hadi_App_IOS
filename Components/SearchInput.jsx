@@ -26,6 +26,8 @@ const Styles=StyleSheet.create({
         fontFamily:"Cairo",
         fontSize:15,
         color:AllColors.grayColor,
-        backgroundColor:AllColors.whiteColor
+        backgroundColor:AllColors.whiteColor,
+        textAlign: "right",
+        writingDirection: "rtl"
     }
 })

@@ -20,6 +20,11 @@
           "audio",
           "audio"
         ],
+        "CFBundleDevelopmentRegion": "ar",
+        "CFBundleLocalizations": [
+          "ar",
+          "en"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       },
       "supportsTablet": true

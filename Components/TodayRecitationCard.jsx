@@ -81,7 +81,6 @@ const TodayRecitationCard = ({ data: initialData }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    direction:"ltr",
     width: "100%",
     height: 180,
     borderRadius: 16,

@@ -34,6 +34,9 @@ import ForceUpdateScreen from './Components/ForceUpdateScreen';
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.hassanali2.quranplus';
 
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
+
 try {
   SplashScreen.preventAutoHideAsync().catch(() => {
     console.log('Splash screen already hidden or not available');
@@ -156,11 +159,6 @@ export default function App() {
       console.warn('Failed to open the Google Play listing:', error);
     }
   };
-
-  useEffect(() => {
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(true);
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -332,6 +330,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    direction: 'rtl',
     backgroundColor: '#1b1f23',
   },
   customWheelButton: {

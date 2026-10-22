@@ -278,14 +278,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: AllColors.BlackBackgroundColor,
-    direction: "ltr",
+    direction: "rtl",
     paddingHorizontal: 16,
     paddingTop: 30,
   },
 
   // Header
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
   },

@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   rewayah: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    marginLeft: 8,
+    marginStart: 8,
     borderRadius: 18,
     backgroundColor: "#292d31",
     borderWidth: 1,

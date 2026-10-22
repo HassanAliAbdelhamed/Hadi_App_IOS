@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     fontFamily: "Cairo",
   },
   actionRow: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "center",
     alignItems: "center",
   },
